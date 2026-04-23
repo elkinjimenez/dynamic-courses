@@ -282,6 +282,7 @@
       margin-left: var(--sidebar-w);
       flex: 1;
       min-height: calc(100vh - 56px);
+      overflow-x: hidden;
     }
 
     /* ─── HERO ─── */
@@ -407,6 +408,8 @@
       display: none;
       padding: 48px 64px 80px;
       max-width: 900px;
+      width: 100%;
+      box-sizing: border-box;
       animation: fadeInUp 0.4s ease both;
     }
 
@@ -704,7 +707,7 @@
     /* ─── CONCEPT CARDS ─── */
     .concept-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 14px;
       margin: 20px 0;
     }
@@ -1025,20 +1028,153 @@
       }
 
       .hero {
-        padding: 40px 24px 40px;
+        padding: 32px 16px 32px;
       }
 
       .lesson {
-        padding: 32px 24px 60px;
+        padding: 28px 16px 52px;
       }
 
       .module-grid {
-        padding: 24px;
+        padding: 24px 16px;
+        grid-template-columns: 1fr;
       }
 
       .hero-stats {
         flex-wrap: wrap;
         gap: 20px;
+      }
+
+      /* ── Lección: header ── */
+      .lesson-header {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+      }
+
+      .lesson-num-badge {
+        font-size: 0.75rem;
+        min-width: 36px;
+        height: 36px;
+      }
+
+      .lesson-title-block h2 {
+        font-size: 1.3rem;
+        letter-spacing: -0.5px;
+      }
+
+      /* ── Lección: body ── */
+      .lesson-body h3 {
+        font-size: 1rem;
+      }
+
+      .lesson-body p,
+      .lesson-body li {
+        font-size: 0.88rem;
+      }
+
+      /* ── Bloques de código ── */
+      .code-block {
+        border-radius: 8px;
+      }
+
+      .code-block pre {
+        overflow-x: auto;
+        font-size: 0.78rem;
+      }
+
+      /* ── Tablas ── */
+      .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      table {
+        min-width: 420px;
+        font-size: 0.8rem;
+      }
+
+      /* ── Navegación de lección ── */
+      .lesson-nav {
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      .nav-btn,
+      .mark-done-btn {
+        font-size: 0.75rem;
+        padding: 8px 14px;
+      }
+
+      /* ── Concept grid ── */
+      .concept-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .concept-card {
+        padding: 14px 12px;
+      }
+
+      .concept-card p {
+        font-size: 0.75rem;
+      }
+
+      /* ── Steps (lista de instalación) ── */
+      .steps li {
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: 0.82rem;
+      }
+
+      .steps li code {
+        word-break: break-all;
+        white-space: normal;
+        max-width: 100%;
+      }
+
+      /* ── Callouts ── */
+      .callout {
+        flex-direction: column;
+        gap: 8px;
+        padding: 14px 16px;
+      }
+
+      /* ── Quiz ── */
+      .quiz-card {
+        padding: 18px 16px;
+      }
+
+      .quiz-opt {
+        font-size: 0.78rem;
+        padding: 9px 12px;
+      }
+
+      /* ── Tags del banner final ── */
+      .tag {
+        font-size: 0.72rem;
+        padding: 3px 8px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .lesson {
+        padding: 24px 14px 52px;
+      }
+
+      .concept-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .lesson-title-block h2 {
+        font-size: 1.2rem;
+      }
+
+      .nav-btn.prev,
+      .nav-btn.next {
+        flex: 1;
+        justify-content: center;
       }
     }
 
@@ -1612,6 +1748,13 @@ func main() {
             </div>
 
             <h3>Tipos Numéricos</h3>
+            <p>Go es <strong>fuertemente tipado y no realiza coerciones automáticas</strong> entre tipos numéricos.
+              Debes convertir explícitamente cuando quieras operar entre tipos distintos (ej. <code>int</code> y
+              <code>float64</code>). Para la mayoría del código de negocio se usan <code>int</code>, <code>int64</code>
+              y <code>float64</code>; los tipos de tamaño fijo (<code>int8</code>, <code>uint32</code>, etc.) se
+              reservan para protocolos binarios o cuando el tamaño en memoria es crítico. Los alias <code>byte</code>
+              (<code>uint8</code>) y <code>rune</code> (<code>int32</code>) son los pilares del manejo de texto.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -1648,6 +1791,11 @@ z := int(y * 1.5)</code></pre>
             </div>
 
             <h3>Strings</h3>
+            <p>Un string en Go es una <strong>secuencia inmutable de bytes</strong> en UTF-8. No se puede modificar un
+              carácter en el lugar; en su lugar se construye un nuevo string. El paquete <code>strings</code> cubre
+              operaciones de búsqueda, transformación y división. Para construir strings dinámicamente con múltiples
+              concatenaciones se recomienda <code>strings.Builder</code> sobre el operador <code>+</code>, ya que evita
+              crear una copia por cada concatenación.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -1765,6 +1913,10 @@ func main() {
             </div>
 
             <h3>Constantes e iota</h3>
+            <p>Las constantes en Go se evalúan en tiempo de compilación y no ocupan memoria en el binario final. El
+              identificador especial <code>iota</code> se reinicia a <code>0</code> en cada bloque <code>const</code> y
+              se incrementa en uno por cada constante declarada, lo que permite crear enumeraciones y secuencias de bits
+              (flags) de forma compacta y legible sin repetir valores manualmente.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -1846,6 +1998,12 @@ func main() {
               reemplaza a todos.</p>
 
             <h3>if / else</h3>
+            <p>El <code>if</code> en Go no lleva paréntesis en la condición, pero las llaves son obligatorias. Su rasgo
+              más útil es el <strong>bloque de inicialización</strong>: puedes declarar una variable justo antes de la
+              condición (<code>if v := expr; cond</code>), y esa variable queda confinada al ámbito del bloque
+              <code>if/else</code>. Este patrón es ubicuo en Go para capturar y verificar el error de una operación en
+              una sola línea.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -1881,6 +2039,11 @@ if err := hacerAlgo(); err != nil {
             </div>
 
             <h3>for — El único bucle</h3>
+            <p>Go elimina la redundancia de tener <code>while</code>, <code>do-while</code> y <code>for</code> en el
+              mismo lenguaje: <strong><code>for</code> los reemplaza a todos</strong> cambiando solo la sintaxis de sus
+              cláusulas. Con tres expresiones es un bucle clásico; con una condición actúa como <code>while</code>; sin
+              expresiones es un bucle infinito. La variante <code>for range</code> itera sobre slices, arrays, maps,
+              strings y channels de forma idiomática, devolviendo índice y valor en cada iteración.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -1929,6 +2092,12 @@ for clave, valor := range colores {
             </div>
 
             <h3>switch</h3>
+            <p>El <code>switch</code> de Go <strong>no necesita <code>break</code></strong>: solo ejecuta el caso que
+              coincide y sale automáticamente (comportamiento opuesto al <em>fall-through</em> implícito de C/Java). Un
+              caso puede listar múltiples valores separados por coma. Cuando se usa sin expresión (<em>expressionless
+                switch</em>) actúa como una cadena <code>if/else if</code> con sintaxis más clara. El <em>type
+                switch</em> (<code>v.(type)</code>) es la forma idiomática de despachar sobre el tipo dinámico de una
+              interfaz.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -2068,6 +2237,11 @@ func lifo() {
                 múltiple de valores</strong>.</p>
 
             <h3>Declaración básica</h3>
+            <p>Las funciones en Go se definen con <code>func</code> y pueden <strong>retornar múltiples valores</strong>
+              de forma nativa, sin tuplas ni wrappers. El patrón más frecuente es retornar <code>(valor, error)</code>,
+              lo que hace el manejo de errores explícito y visible. Los <strong>retornos nombrados</strong> permiten
+              declarar variables de retorno en la firma y usar un <code>return</code> “naked” al final, útiles en
+              funciones cortas aunque hay que usarlos con criterio para no perder claridad.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -2118,6 +2292,11 @@ valor, _ := dividir(10, 2)</code></pre>
             </div>
 
             <h3>Funciones variádicas</h3>
+            <p>Una función variádica acepta <strong>un número variable de argumentos</strong> del mismo tipo mediante el
+              prefijo <code>...</code> en el último parámetro. Dentro de la función, ese parámetro se comporta como un
+              slice. Para pasar un slice existente como argumentos variádicos se usa la sintaxis <code>slice...</code>
+              en la llamada. <code>fmt.Println</code> y <code>append</code> son ejemplos clave de la stdlib que usan
+              esta característica.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -2146,6 +2325,11 @@ fmt.Println(suma(nums...))          // 60</code></pre>
             </div>
 
             <h3>Funciones como valores y closures</h3>
+            <p>En Go las funciones son <strong>ciudadanos de primera clase</strong>: se pueden asignar a variables,
+              pasar como argumentos y retornar desde otras funciones. Un <strong>closure</strong> es una función anónima
+              que <em>captura</em> las variables del ámbito exterior, incluso después de que ese ámbito termine. Cada
+              llamada a la función generadora crea un closure con su propio estado independiente, lo que permite
+              implementar contadores, generadores y el patrón de <em>middleware funcional</em> de forma elegante.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -2198,6 +2382,11 @@ procesar("hola go") // logs y retorna "HOLA GO"</code></pre>
             </div>
 
             <h3>Funciones init()</h3>
+            <p><code>init()</code> es una función especial que el runtime de Go ejecuta <strong>automáticamente antes de
+                <code>main()</code></strong>, sin parámetros ni retorno y sin posibilidad de llamarla explícitamente. Un
+              paquete puede tener múltiples <code>init()</code> y se ejecutan en orden de aparición. Se usa para
+              inicializar estado global del paquete (configuración, conexiones, registros), pero debe mantenerse simple
+              y sin efectos secundarios complejos para no ocultar dependencias entre paquetes.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -2437,6 +2626,12 @@ for k, v := range m1 {
               menos frágil.</p>
 
             <h3>Structs y Métodos</h3>
+            <p>Un <strong>struct</strong> es la forma de Go de agrupar campos de datos relacionados bajo un mismo tipo.
+              Los <strong>métodos</strong> son funciones asociadas a un tipo mediante un <em>receiver</em>. Go no tiene
+              clases; en su lugar usa <strong>embedding</strong> para reutilizar comportamiento: al incrustar un struct
+              dentro de otro, sus campos y métodos son promovidos al tipo contenedor. El patrón constructor
+              (<code>NuevoX(...)</code>) es la forma idiomática de crear structs garantizando valores iniciales válidos
+              y abstrayendo los detalles de creación.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -2495,7 +2690,7 @@ type Empleado struct {
 }
 
 func main() {
-    u := NuevoUsuario("Elkin", "elkin@hitss.com")
+    u := NuevoUsuario("Elkin", "elkin@ejemplo.com")
     fmt.Println(u)        // Usuario{1: Elkin}
     u.Desactivar()
     fmt.Println(u.Activo) // false
@@ -2706,6 +2901,12 @@ func describir(v any) string {
               y simples. Entenderlos es clave para saber cuándo un método modifica su receptor o no.</p>
 
             <h3>Conceptos básicos</h3>
+            <p>Un <strong>puntero</strong> almacena la dirección de memoria de otro valor. El operador
+              <code>&amp;</code> obtiene la dirección de una variable y <code>*</code> la desreferencia (accede al valor
+              en esa dirección). A diferencia de C, Go <strong>no tiene aritmética de punteros</strong>, lo que los hace
+              seguros de usar. La diferencia fundamental es <em>paso por valor</em> (la función recibe una copia) vs.
+              <em>paso por referencia</em> (la función puede modificar el original a través del puntero).
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -2805,6 +3006,12 @@ func main2() {
             </div>
 
             <h3>Punteros a structs en APIs</h3>
+            <p>Retornar un <strong>puntero a struct</strong> desde funciones de búsqueda o creación es el patrón
+              idiomático en Go: un puntero <code>nil</code> representa de forma explícita “no encontrado” o “no existe”,
+              mientras que un error <code>nil</code> con valor <code>nil</code> indica ausencia sin error real. Además,
+              retornar el puntero evita copiar el struct completo en cada llamada, lo que mejora el rendimiento con
+              structs grandes. Las struct tags como <code>json:"nombre"</code> controlan la serialización JSON
+              automática que hace el paquete <code>encoding/json</code>.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -2895,6 +3102,10 @@ if err != nil {
             </div>
 
             <h3>Lanzar goroutines</h3>
+            <p>Para lanzar una goroutine basta con anteponer la palabra clave <code>go</code> a cualquier llamada de
+              función. La goroutine se ejecuta de forma independiente: el programa no espera a que termine y continúa
+              con la siguiente instrucción. El problema clásico es que si <code>main()</code> llega a su fin antes de
+              que las goroutines terminen, el runtime las mata sin avisar.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -2936,6 +3147,12 @@ func main() {
             </div>
 
             <h3>sync.WaitGroup — coordinación correcta</h3>
+            <p><code>sync.WaitGroup</code> es el mecanismo idiomático de Go para esperar a que un grupo de goroutines
+              termine. Funciona como un contador: se incrementa con <code>Add(n)</code> antes de lanzar cada goroutine,
+              cada goroutine llama <code>Done()</code> al finalizar (normalmente con <code>defer</code>), y
+              <code>Wait()</code> bloquea al llamador hasta que el contador llega a cero. El patrón de semáforo con un
+              canal con buffer permite además limitar cuántas goroutines se ejecutan al mismo tiempo.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -2980,6 +3197,14 @@ func procesarConLimite(items []string, maxConcurrencia int) {
             </div>
 
             <h3>sync.Mutex — proteger estado compartido</h3>
+            <p>Cuando varias goroutines leen y escriben la misma variable sin coordinación se produce una
+              <strong>carrera de datos</strong> (<em>data race</em>), que puede corromper el estado del programa.
+              <code>sync.Mutex</code> garantiza acceso exclusivo: solo una goroutine puede estar dentro de la sección
+              crítica a la vez. Para casos donde las lecturas son mucho más frecuentes que las escrituras,
+              <code>sync.RWMutex</code> permite múltiples lectores simultáneos (<code>RLock</code>/<code>RUnlock</code>)
+              y bloqueo exclusivo solo para escrituras (<code>Lock</code>/<code>Unlock</code>), mejorando el
+              rendimiento.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -3137,6 +3362,12 @@ func CerrarConexion(conn interface{ Close() error }) {
             </p>
 
             <h3>Channels básicos</h3>
+            <p>Un channel se crea con <code>make(chan T)</code>. Los <strong>unbuffered channels</strong> sincronizan al
+              emisor y al receptor: el envío (<code>ch &lt;- v</code>) bloquea hasta que alguien reciba, y viceversa.
+              Los <strong>buffered channels</strong> (<code>make(chan T, n)</code>) permiten encolar hasta <em>n</em>
+              valores sin bloquear. Cuando no se enviarán más valores, se cierra el channel con <code>close(ch)</code>
+              para que los receptores puedan iterar con <code>range</code> o detectar el cierre con el segundo valor de
+              retorno <code>ok</code>.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -3181,6 +3412,11 @@ if !ok {
             </div>
 
             <h3>Pipeline Pattern</h3>
+            <p>Un <strong>pipeline</strong> es una serie de etapas conectadas por channels donde cada etapa es una
+              goroutine que recibe valores de la anterior, los transforma y los envía a la siguiente. Cada función
+              recibe un channel de solo lectura (<code>&lt;-chan T</code>) y devuelve uno nuevo, lo que permite
+              encadenar transformaciones de forma declarativa y concurrente. Cuando una etapa termina de producir
+              valores, cierra su canal de salida para señalar el fin del flujo.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -3223,6 +3459,13 @@ func main() {
             </div>
 
             <h3>select</h3>
+            <p><code>select</code> funciona como un <code>switch</code> para operaciones de channel: bloquea hasta que
+              alguno de los <code>case</code> esté listo y ejecuta ese bloque. Si varios están listos a la vez, Go elige
+              uno al azar. Un <code>case default</code> hace que <code>select</code> sea no bloqueante. Es el mecanismo
+              fundamental para implementar <strong>timeouts</strong> con <code>time.After</code> y
+              <strong>cancelación</strong> con <code>context.Context</code>, evitando que goroutines queden bloqueadas
+              indefinidamente.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -3420,6 +3663,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
               visible.</p>
 
             <h3>La interfaz error</h3>
+            <p>La interfaz <code>error</code> en Go es minimalista: solo requiere un método <code>Error() string</code>.
+              Los errores se crean con <code>errors.New</code> o <code>fmt.Errorf</code> y se retornan como un valor más
+              de la función. Los <strong>errores centinela</strong> son variables de error a nivel de paquete que
+              permiten a los llamadores identificar condiciones específicas con <code>errors.Is()</code>, sin depender
+              de la cadena de texto del mensaje de error.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -3460,6 +3708,12 @@ if errors.Is(err, ErrBadRequest) {
             </div>
 
             <h3>Errores personalizados (custom errors)</h3>
+            <p>Cuando necesitas añadir <strong>contexto estructurado</strong> a un error (código HTTP, campo fallido,
+              detalles adicionales) puedes implementar la interfaz <code>error</code> en tu propio struct. Con Go 1.13+,
+              la función <code>fmt.Errorf</code> y el verbo <code>%w</code> permiten <strong>envolver errores</strong>
+              manteniendo la cadena de causa original. <code>errors.Is()</code> y <code>errors.As()</code> recorren esta
+              cadena automáticamente, lo que hace posible verificar errores a cualquier profundidad de anidamiento sin
+              desempaquetar manualmente.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -3489,7 +3743,7 @@ func procesarPedido(id int) error {
     return nil
 }
 
-// Desenvuelver errores
+// Desenvolver errores
 err := procesarPedido(0)
 var apiErr *APIError
 if errors.As(err, &apiErr) {
@@ -3506,6 +3760,13 @@ if errors.Is(err, ErrNotFound) {
             </div>
 
             <h3>panic y recover</h3>
+            <p><code>panic</code> detiene la ejecución normal de la goroutine actual, ejecuta todos sus
+              <code>defer</code>s y, si no se recupera, termina el programa. <code>recover</code> captura un panic en
+              marcha pero <strong>solo funciona dentro de una función llamada por <code>defer</code></strong>. En
+              aplicaciones web es imprescindible un middleware de recuperación que atrape panics inesperados y devuelva
+              un HTTP 500 en lugar de tumbar todo el servidor. Para el código de negocio normal, siempre usa
+              <code>error</code>; deja <code>panic</code> para condiciones que indiquen un bug irrecuperable.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -3589,6 +3850,12 @@ func recoveryMiddleware(next http.Handler) http.Handler {
           </div>
           <div class="lesson-body">
             <h3>Sistema de módulos (go.mod)</h3>
+            <p>Los <strong>módulos</strong> son la unidad de distribución y versionado de Go desde la versión 1.11. El
+              archivo <code>go.mod</code> define el nombre del módulo y sus dependencias directas con versiones semver;
+              <code>go.sum</code> almacena los hashes criptográficos de cada dependencia para garantizar builds
+              reproducibles. <code>go mod tidy</code> es el comando central para mantener el archivo en orden: agrega
+              dependencias faltantes y elimina las que ya no se usan.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -3617,6 +3884,13 @@ go mod vendor</code></pre>
             </div>
 
             <h3>Estructura de proyecto recomendada</h3>
+            <p>La comunidad Go ha convergido en una estructura estándar para microservicios. El directorio
+              <code>cmd/</code> contiene los puntos de entrada (cada binario en su propio subdirectorio),
+              <code>internal/</code> agrupa el código privado del proyecto que el compilador impide importar desde otros
+              módulos, y <code>pkg/</code> reúne librerías reutilizables y públicas. La separación en capas
+              <code>handler → service → repository</code> mantiene la lógica de negocio aislada del transporte HTTP y
+              del acceso a datos, facilitando los tests unitarios con mocks.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -3652,6 +3926,12 @@ go mod vendor</code></pre>
             </div>
 
             <h3>Visibilidad: exportado vs no exportado</h3>
+            <p>Go controla la visibilidad con una regla única: los identificadores que comienzan con <strong>letra
+                mayúscula son exportados</strong> (visibles desde otros paquetes) y los que comienzan con minúscula son
+              privados al paquete. Esta convención aplica a funciones, tipos, variables, constantes y campos de struct.
+              Para exponer campos privados de forma controlada se usan <em>getters</em>, permitiendo encapsular la
+              implementación interna sin necesidad de palabras clave como <code>public</code> o <code>private</code>.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -3687,6 +3967,11 @@ func (u *Usuario) Email() string { return u.email }</code></pre>
             </div>
 
             <h3>Paquetes importantes de la stdlib</h3>
+            <p>La librería estándar de Go es excepcionalmente rica: puedes construir un servidor HTTP de producción,
+              serializar JSON, conectarte a bases de datos SQL, manejar concurrencia y realizar criptografía sólida
+              <strong>sin ninguna dependencia externa</strong>. Conocer los paquetes clave acelera el desarrollo y
+              reduce el número de dependencias de terceros que hay que auditar y mantener.
+            </p>
             <div class="table-wrap">
               <table>
                 <tr>
@@ -3780,6 +4065,13 @@ func (u *Usuario) Email() string { return u.email }</code></pre>
             </p>
 
             <h3>Servidor básico</h3>
+            <p>El paquete <code>net/http</code> incluye un servidor HTTP listo para producción. Se crea un
+              <strong><code>ServeMux</code></strong> (router) que mapea patrones de ruta a handler functions. Desde Go
+              1.22 el router soporta método HTTP y parámetros de ruta en el patrón (<code>GET /usuarios/{id}</code>). Es
+              fundamental configurar siempre <code>ReadTimeout</code>, <code>WriteTimeout</code> e
+              <code>IdleTimeout</code> en <code>http.Server</code> porque sus valores por defecto son
+              <strong>cero</strong> (sin timeout), lo que puede dejar conexiones abiertas indefinidamente en producción.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -3829,6 +4121,11 @@ func main() {
             </div>
 
             <h3>CRUD completo con JSON</h3>
+            <p>El patrón estándar para APIs REST en Go con <code>net/http</code> usa funciones helper para centralizar
+              la respuesta JSON y los errores. <code>json.NewDecoder(r.Body).Decode(&amp;req)</code> deserializa el
+              cuerpo de la request; <code>json.NewEncoder(w).Encode(data)</code> serializa la respuesta. Siempre hay que
+              cerrar <code>r.Body</code> con <code>defer r.Body.Close()</code> para liberar la conexión subyacente.
+              Desde Go 1.22, <code>r.PathValue(“id”)</code> extrae parámetros de ruta sin frameworks adicionales.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -3856,7 +4153,7 @@ type Usuario struct {
 
 // Storage en memoria (en prod: base de datos)
 var usuarios = []Usuario{
-    {1, "Elkin", "elkin@hitss.com"},
+    {1, "Elkin", "elkin@ejemplo.com"},
     {2, "Ana", "ana@ejemplo.com"},
 }
 
@@ -3929,6 +4226,12 @@ func eliminarUsuario(w http.ResponseWriter, r *http.Request) {
             </div>
 
             <h3>Middleware</h3>
+            <p>Un <strong>middleware</strong> es una función que recibe un <code>http.Handler</code>, añade
+              comportamiento (logging, autenticación, CORS, rate limiting) y llama al siguiente handler. Se implementan
+              como funciones de orden superior: reciben el handler a envolver y retornan un nuevo handler. La función
+              <code>chainMiddleware</code> permite componer varios middlewares en orden, aplica el patrón decorador
+              típico de frameworks web de forma completamente nativa con la stdlib.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -4035,6 +4338,10 @@ mux.Handle("/api/", chainMiddleware(
             </p>
 
             <h3>Instalación y setup</h3>
+            <p>Gin se agrega al proyecto como cualquier otra dependencia con <code>go get</code>. Es conveniente
+              instalar al mismo tiempo el validador (<code>go-playground/validator</code>) y la librería JWT
+              (<code>golang-jwt/jwt</code>) que se usarán en los patrones de autenticación. Después de agregar
+              dependencias, ejecuta <code>go mod tidy</code> para actualizar <code>go.sum</code>.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -4051,6 +4358,13 @@ go get github.com/golang-jwt/jwt/v5            # JWT</code></pre>
             </div>
 
             <h3>API REST completa con Gin</h3>
+            <p>Gin simplifica el desarrollo de APIs con su <strong>router basado en radix tree</strong>, binding
+              automático de JSON con validación via struct tags (<code>binding:"required,email"</code>), grupos de rutas
+              y middleware integrado (Logger, Recovery). El patrón de <strong>handlers estructurados</strong>
+              (<code>type Handler struct{ service ... }</code>) inyecta las dependencias en el handler, facilita los
+              tests unitarios y mantiene el código organizado en proyectos grandes. <code>c.ShouldBindJSON</code>
+              deserializa y valida en un solo paso; <code>c.Param</code> y <code>c.DefaultQuery</code> leen parámetros
+              de ruta y query string.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -4182,6 +4496,14 @@ func main() {
             </div>
 
             <h3>JWT Authentication</h3>
+            <p><strong>JSON Web Tokens (JWT)</strong> son el estándar para autenticación <em>stateless</em> en APIs
+              REST. El servidor genera un token firmado con HS256 que incluye los claims del usuario (ID, email,
+              expiración) y el cliente lo envía en cada request en el header
+              <code>Authorization: Bearer &lt;token&gt;</code>. El middleware verifica la firma y la vigencia del token,
+              y si es válido inyecta los claims en el contexto de Gin para que los handlers posteriores los usen con
+              <code>c.GetInt("user_id")</code>. La clave secreta nunca debe ir en el código fuente; debe leerse desde
+              variables de entorno.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -4302,6 +4624,12 @@ func perfil(c *gin.Context) {
               lo hacen ideal. Veamos los patrones esenciales.</p>
 
             <h3>Configuración por entorno</h3>
+            <p>La práctica recomendada para microservicios es leer <strong>toda la configuración desde variables de
+                entorno</strong> (principio de las 12-factor apps). <code>os.Getenv</code> retorna la variable o cadena
+              vacía; cuando una variable es obligatoria se usa <code>mustGetEnv</code> que hace <code>panic</code> al
+              arranque si falta, fallando rápido en lugar de operar con valores incorrectos. Centralizar la
+              configuración en un struct evita el acceso disperso a <code>os.Getenv</code> en todo el código y facilita
+              el testing.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -4354,6 +4682,14 @@ func mustGetEnv(key string) string {
             </div>
 
             <h3>Conexión a PostgreSQL</h3>
+            <p>El paquete <code>database/sql</code> define una interfaz genérica; el driver concreto
+              (<code>lib/pq</code> para PostgreSQL) se registra con un import en blanco
+              (<code>_ "github.com/lib/pq"</code>). Es fundamental configurar el <strong>connection pool</strong>:
+              <code>SetMaxOpenConns</code> evita saturar la base de datos, <code>SetMaxIdleConns</code> mantiene
+              conexiones listas para reutilizar, y <code>SetConnMaxLifetime</code> rota las conexiones para evitar que
+              queden en estado inconsistente. Las <strong>transacciones</strong> con <code>defer tx.Rollback()</code>
+              garantizan que siempre se haga rollback si algo falla antes del <code>Commit()</code>.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -4427,6 +4763,13 @@ func (r *UsuarioRepo) TransferirCreditos(ctx context.Context, deOrigen, aDestino
             </div>
 
             <h3>Comunicación entre servicios (HTTP Client)</h3>
+            <p>Para llamar a otros microservicios se usa <code>http.Client</code> con un <strong>Timeout
+                explícito</strong> (nunca el cliente por defecto <code>http.DefaultClient</code>, que tiene timeout
+              cero). La función <code>http.NewRequestWithContext</code> propaga el <code>context.Context</code> del
+              request entrante, permitiendo que si el cliente que inició la operación cancela, la solicitud saliente al
+              servicio externo también se cancele automáticamente. Siempre hay que cerrar <code>resp.Body</code> con
+              <code>defer</code> para liberar la conexión al pool.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -4483,6 +4826,13 @@ func (c *ProductoClient) ObtenerProducto(ctx context.Context, id int) (*Producto
             </div>
 
             <h3>Dockerfile multi-stage (producción)</h3>
+            <p>Go compila a un <strong>binario estático autocontenido</strong>, lo que permite usar la imagen base
+              <code>scratch</code> (completamente vacía) en producción. El build multi-stage funciona en dos fases: la
+              primera etapa usa la imagen del compilador (<code>golang:alpine</code>) para compilar el binario con
+              <code>CGO_ENABLED=0</code> y los flags <code>-ldflags="-s -w"</code> para reducir el tamaño eliminando
+              símbolos de debug; la segunda copia solo ese binario a <code>scratch</code>, resultando en una imagen de
+              producción de ~5MB que no tiene shell ni utilidades del sistema, reduciendo la superficie de ataque.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -4514,6 +4864,13 @@ ENTRYPOINT ["/server"]</code></pre>
             </div>
 
             <h3>Graceful Shutdown</h3>
+            <p>Un <strong>graceful shutdown</strong> permite que el servidor deje de aceptar nuevas conexiones pero
+              <strong>termina de procesar las requests en vuelo</strong> antes de cerrarse. El patrón estándar en Go usa
+              un channel que escucha las señales del sistema operativo (<code>SIGINT</code> al presionar Ctrl+C,
+              <code>SIGTERM</code> enviado por Kubernetes al escalar) y llama a <code>srv.Shutdown(ctx)</code> con un
+              contexto con timeout (ej. 30s). Esto es esencial en Kubernetes para garantizar zero-downtime deployments:
+              el pod recibe SIGTERM, termina las requests activas y luego se cierra limpiamente.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -4594,6 +4951,14 @@ ENTRYPOINT ["/server"]</code></pre>
               Los archivos de test terminan en <code>_test.go</code>.</p>
 
             <h3>Unit Tests</h3>
+            <p>Go incluye el paquete <code>testing</code> en la stdlib: no necesitas frameworks externos. Las funciones
+              de test empiezan con <code>Test</code>, reciben <code>*testing.T</code> y viven en archivos
+              <code>_test.go</code>. El patrón más idiomático es el <strong>table-driven test</strong>: un slice de
+              structs define todos los casos de prueba (nombre, input, expected), se itera con <code>for range</code> y
+              cada caso se ejecuta como subtest independiente con <code>t.Run()</code>, facilitando la identificación
+              del caso fallido en la salida. <code>t.Fatal</code> detiene el test inmediatamente; <code>t.Error</code>
+              registra el fallo pero continúa ejecutando.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -4657,6 +5022,11 @@ func TestValidarEmail(t *testing.T) {
             </div>
 
             <h3>Mocks con interfaces</h3>
+            <p>Las <strong>interfaces implícitas</strong> de Go hacen el mocking trivial: basta con crear un struct que
+              implemente la misma interfaz que la dependencia real. El patrón de <em>function fields</em> (campos de
+              tipo func en el mock) permite redefinir el comportamiento por test sin crear un struct separado para cada
+              escenario. Para proyectos grandes se usan generadores como <code>mockgen</code> que producen mocks
+              automáticamente a partir de interfaces, reduciendo el boilerplate.</p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -4702,6 +5072,14 @@ func TestObtenerUsuario_NoExiste(t *testing.T) {
             </div>
 
             <h3>HTTP Handler Tests</h3>
+            <p>El paquete <code>net/http/httptest</code> permite testear handlers HTTP sin levantar un servidor real.
+              <code>httptest.NewRequest</code> crea una request sincónica y <code>httptest.NewRecorder</code> captura la
+              respuesta en memoria. En Gin, hay que configurar <code>gin.SetMode(gin.TestMode)</code> para desactivar el
+              logger y crear un router de test limpio. Este enfoque permite verificar el status code, headers y body
+              JSON de los endpoints en tests unitarios rápidos sin dependencias externas. Los
+              <strong>benchmarks</strong> (<code>func BenchmarkX(b *testing.B)</code>) miden rendimiento con
+              <code>go test -bench=.</code>.
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-title">
@@ -4860,6 +5238,13 @@ func BenchmarkCrearUsuario(b *testing.B) {
           </div>
 
           <h3>Funciones genéricas</h3>
+          <p>Una función genérica declara uno o más <strong>type parameters</strong> entre corchetes, justo después del
+            nombre de la función: <code>func Nombre[T constraint](args)</code>. La <em>constraint</em> limita qué tipos
+            pueden usarse y qué operaciones son válidas sobre <code>T</code>. En la mayoría de los casos el compilador
+            infiere el tipo automáticamente desde los argumentos; solo necesitas especificarlo explícitamente cuando no
+            puede inferirlo. El ejemplo más potente es escribir funciones de orden superior como <code>Map</code> y
+            <code>Filter</code> que funcionan con slices de cualquier tipo sin duplicar código.
+          </p>
           <div class="code-block">
             <div class="code-header">
               <div class="code-title">
@@ -4930,6 +5315,14 @@ func main() {
           </div>
 
           <h3>Constraints personalizadas</h3>
+          <p>Las constraints son <strong>interfaces que restringen qué tipos puede tomar un type parameter</strong>.
+            Pueden listar tipos concretos con el operador de unión (<code>int | float64</code>) o usar el prefijo
+            <code>~</code> para incluir también los tipos cuyo <em>tipo subyacente</em> sea el indicado
+            (<code>~int</code> acepta cualquier tipo definido como <code>type MiEntero int</code>). El paquete
+            <code>golang.org/x/exp/constraints</code> proporciona constraints reutilizables como <code>Ordered</code>
+            (todos los tipos comparables con <code>&lt;</code>) y <code>Integer</code>. La constraint <code>any</code>
+            equivale a <code>interface{}</code> y acepta cualquier tipo.
+          </p>
           <div class="code-block">
             <div class="code-header">
               <div class="code-title">
@@ -4982,6 +5375,13 @@ func main() {
           </div>
 
           <h3>Tipos genéricos</h3>
+          <p>Al igual que las funciones, los <strong>tipos struct también pueden tener type parameters</strong>
+            (<code>type Stack[T any] struct</code>), lo que permite construir estructuras de datos reutilizables y
+            type-safe como pilas, colas, sets o árboles que funcionan con cualquier tipo sin recurrir a
+            <code>interface{}</code> con type assertions. Los métodos de un tipo genérico deben repetir el type
+            parameter en su receiver (<code>func (s *Stack[T]) Push(item T)</code>). Esto elimina el patrón antiguo de
+            crear, por ejemplo, <code>IntStack</code>, <code>StringStack</code> y <code>UserStack</code> por separado.
+          </p>
           <div class="code-block">
             <div class="code-header">
               <div class="code-title">
@@ -5148,6 +5548,12 @@ func main() {
           </div>
 
           <h3>Cuándo usar reflection</h3>
+          <p>Reflection es <strong>poderosa pero costosa</strong>: los errores se detectan en runtime en lugar de en
+            compilación, el código es más difícil de leer y el rendimiento puede ser 5–10x menor que el código estático.
+            La regla práctica es: si los generics pueden resolver el problema, úsalos; si necesitas trabajar con tipos
+            <em>completamente desconocidos</em> en tiempo de ejecución (como lo hace <code>encoding/json</code> al
+            serializar cualquier struct), entonces reflection es la herramienta correcta.
+          </p>
           <div class="table-wrap">
             <table>
               <tr>
@@ -5180,6 +5586,14 @@ func main() {
           </div>
 
           <h3>Herramientas esenciales del ecosistema</h3>
+          <p>Go incluye un ecosistema de herramientas de primera clase en la propia distribución. <code>gofmt</code> es
+            el formateador oficial: en Go <strong>no existe debate de estilo</strong> porque todo el código se formatea
+            igual automáticamente. <code>go vet</code> detecta bugs comunes (printf con args incorrectos, mutex
+            copiado). <code>go test -race</code> usa el race detector de Go para encontrar carreras de datos en tiempo
+            de ejecución. La compilación cruzada (<em>cross-compilation</em>) es trivial: basta con definir
+            <code>GOOS</code> y <code>GOARCH</code> para compilar binarios de Linux desde Windows o viceversa, sin
+            configuración adicional.
+          </p>
           <div class="code-block">
             <div class="code-header">
               <div class="code-title">
@@ -5222,6 +5636,12 @@ GOOS=darwin  GOARCH=arm64 go build -o server-mac .</code></pre>
           </div>
 
           <h3>go:generate — generación automática de código</h3>
+          <p>Las directivas <code>//go:generate comando</code> son comentarios especiales en el código fuente que
+            definen comandos a ejecutar con <code>go generate ./...</code>. Permiten automatizar la generación de mocks
+            (<code>mockgen</code>), código SQL typesafe (<code>sqlc</code>), métodos <code>String()</code> para enums
+            (<code>stringer</code>) y otros artefactos que deben mantenerse sincronizados con el código. La directiva se
+            guarda junto al código fuente que genera, haciendo explícita la relación entre fuente y artefacto generado.
+          </p>
           <div class="code-block">
             <div class="code-header">
               <div class="code-title">
@@ -5537,15 +5957,24 @@ const (
       'WaitGroup': 'sync.WaitGroup: contador atómico para esperar que un grupo de goroutines terminen. Add(n) antes de lanzar, Done() al terminar, Wait() para bloquear hasta que todas acaben.',
       'DSN': 'Data Source Name: cadena de conexión a una base de datos. Contiene protocolo, usuario, contraseña, host, puerto y nombre de la BD. Ej: postgres://user:pass@host:5432/db',
       'JWT': 'JSON Web Token: token firmado con clave secreta que contiene datos del usuario (claims). Permite autenticación sin estado sin consultar la BD en cada request.',
+      'claims': 'Datos embebidos en un JWT: sub (ID del usuario), exp (expiración), iat (emisión) y cualquier campo personalizado. Se codifican en Base64 en la segunda parte del token — no son secretos, solo están firmados.',
+      'token': 'Credencial digital generada por el servidor tras autenticarse. El cliente lo adjunta en cada request (cabecera Authorization: Bearer <token>) para demostrar su identidad sin reenviar usuario y contraseña.',
+      'HS256': 'HMAC-SHA256: algoritmo de firma simétrico usado en JWT. Usa una sola clave secreta compartida para firmar y verificar el token. Más simple que RS256 (asimétrico) pero requiere que servidor y verificador compartan la misma clave.',
+      'stateless': 'Sin estado: el servidor no guarda información de sesión entre requests. Cada request contiene toda la información necesaria para ser procesado de forma independiente. Escala horizontalmente sin necesidad de sesiones compartidas.',
       'ORM': 'Object-Relational Mapper: librería que mapea filas de una BD relacional a structs de código y viceversa, abstrayendo el SQL manual. Ej: GORM.',
       'gRPC': 'Framework RPC de Google que usa Protocol Buffers (formato binario). Más rápido y eficiente que REST/JSON para comunicación interna entre microservicios.',
       'linter': 'Herramienta que analiza el código sin ejecutarlo para detectar bugs potenciales, malas prácticas y violaciones de estilo. Ej: golangci-lint.',
       'benchmark': 'Test que mide el rendimiento/velocidad de una función. Se escribe como func BenchmarkXxx(b *testing.B) y se ejecuta con go test -bench=.',
       'pipeline': 'Patrón donde goroutines se encadenan con channels: la salida de una etapa es entrada de la siguiente, procesando datos en paralelo de forma concurrente.',
       'graceful shutdown': 'Apagado ordenado del servidor: primero deja de aceptar nuevas conexiones, espera que las activas finalicen y luego cierra. Evita cortar requests a la mitad.',
+      'zero-downtime deployment': 'Técnica de despliegue donde la nueva versión reemplaza a la anterior sin interrupción de servicio. Se logra combinando graceful shutdown, health checks y un load balancer que drena el tráfico antes de matar el proceso viejo.',
+      'SIGTERM': 'Señal del SO que le indica a un proceso que debe terminar ordenadamente. A diferencia de SIGKILL (que mata de inmediato), el proceso puede capturarla para hacer cleanup — cerrar conexiones, vaciar buffers y completar requests en vuelo antes de salir.',
+      '12-factor': 'Metodología de 12 principios para apps SaaS modernas (Heroku): un repo, dependencias explícitas, config en variables de entorno, backing services intercambiables, procesos stateless, escala horizontal, logs como streams y apagado graceful. En Go aplica de forma natural gracias a su binario único y manejo de entorno.',
       'sentinel error': 'Error predefinido como variable global (var ErrNotFound = errors.New("...")) para identificar tipos de error por identidad con errors.Is(), en vez de comparar strings.',
       'CRUD': 'Create, Read, Update, Delete: las cuatro operaciones básicas de persistencia de datos en cualquier sistema.',
       'DTO': 'Data Transfer Object: struct usado solo para transportar datos entre capas (request/response de API), sin lógica de negocio.',
+      'boilerplate': 'Código repetitivo y predecible que hay que escribir en casi todo proyecto sin aportar lógica de negocio (imports estándar, getters/setters, inicialización de structs). Go reduce el boilerplate con zero values, interfaces implícitas y generics.',
+      'runtime': 'Entorno de ejecución incluido en cada binario Go: gestiona el scheduler de goroutines, el garbage collector, la pila de llamadas y la comunicación entre goroutines. A diferencia de Java/Python, no es una VM separada — se compila dentro del propio binario.',
       'duck typing': 'Si un tipo tiene todos los métodos de una interfaz, la implementa — sin declararlo. En Go las interfaces son implícitas: no hay "implements".',
       'LIFO': 'Last In, First Out: el último en entrar es el primero en salir. Los defer en Go siguen este orden: el último defer declarado se ejecuta primero.',
       'radix tree': 'Árbol de búsqueda comprimido. Gin lo usa para su router HTTP para encontrar el handler correcto de forma muy eficiente, incluso con cientos de rutas.',
@@ -5553,6 +5982,7 @@ const (
       'reflection': 'Capacidad de inspeccionar y manipular tipos y valores propios del programa en tiempo de ejecución. El paquete reflect lo implementa. Útil en librerías genéricas.',
       'type parameter': 'Placeholder de tipo en una función o tipo genérico, escrito como [T constraint]. Al usar la función, T se sustituye por el tipo concreto: int, string, etc.',
       'type assertion': 'Extraer el valor concreto almacenado en una interfaz: v, ok := i.(Tipo). Si ok es false, el tipo no coincide. Sin el ok, produce panic si el tipo es incorrecto.',
+      'stdlib': 'Standard Library: conjunto de paquetes incluidos en la distribución oficial de Go (net/http, encoding/json, sync, context, etc.). No requieren go get — vienen con el compilador.',
       'panic': 'Mecanismo de error irrecuperable en Go: detiene la ejecución del goroutine actual, ejecuta los defer pendientes y termina el programa con un stack trace. Se puede recuperar con recover() dentro de un defer.',
     };
 
@@ -5563,7 +5993,7 @@ const (
     function addGlossaryTooltips() {
       document.querySelectorAll('.lesson').forEach(lesson => {
         const seen = new Set();
-        const targets = lesson.querySelectorAll('.lesson-body p, .lesson-body li, .callout-body');
+        const targets = lesson.querySelectorAll('.lesson-body p, .lesson-body li, .lesson-body h3, .callout-body');
 
         targets.forEach(el => {
           // Skip elements inside code blocks or quiz cards
@@ -5588,7 +6018,7 @@ const (
             // Try each term — stop at first match (one wrap per text node)
             for (const [term, tip] of Object.entries(GLOSSARY)) {
               if (seen.has(term)) continue;
-              const regex = new RegExp('(' + escapeRegexTerm(term) + 's?)', 'i');
+              const regex = new RegExp('\\b(' + escapeRegexTerm(term) + 's?)\\b', 'i');
               const text = textNode.textContent;
               const match = regex.exec(text);
               if (!match) continue;

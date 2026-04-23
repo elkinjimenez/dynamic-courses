@@ -1,0 +1,4143 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kafka Mastery — Mensajería de Eventos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/monokai.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+  <style>
+    :root {
+      --kafka-orange: #E8762B;
+      --kafka-orange-dim: #c95f15;
+      --kafka-orange-glow: rgba(232, 118, 43, 0.14);
+      --kafka-orange-glow2: rgba(232, 118, 43, 0.08);
+      --kafka-red: #FF4D4D;
+      --bg-void: #080705;
+      --bg-deep: #0d0b09;
+      --bg-surface: #131008;
+      --bg-card: #18140d;
+      --bg-elevated: #1f1910;
+      --border: rgba(232, 118, 43, 0.16);
+      --border-bright: rgba(232, 118, 43, 0.38);
+      --text-primary: #f0e8dc;
+      --text-secondary: #a09070;
+      --text-muted: #5a4e3a;
+      --yellow: #F5C842;
+      --green: #52D68A;
+      --blue: #5BA4CF;
+      --purple: #C792EA;
+      --sidebar-w: 300px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg-void);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-void);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--kafka-orange-dim);
+      border-radius: 2px;
+    }
+
+    /* ── STREAM BACKGROUND ANIMATION ── */
+    .stream-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+      opacity: 0.04;
+    }
+
+    .stream-line {
+      position: absolute;
+      top: 0;
+      width: 1px;
+      height: 100%;
+      background: linear-gradient(to bottom, transparent 0%, var(--kafka-orange) 50%, transparent 100%);
+      animation: stream-flow linear infinite;
+    }
+
+    @keyframes stream-flow {
+      0% {
+        transform: translateY(-100%);
+      }
+
+      100% {
+        transform: translateY(100%);
+      }
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: 58px;
+      background: rgba(8, 7, 5, 0.93);
+      backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 14px;
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 1.35rem;
+      color: var(--kafka-orange);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .logo-icon {
+      width: 34px;
+      height: 34px;
+      background: var(--kafka-orange);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo-icon::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .progress-bar-outer {
+      width: 180px;
+      height: 4px;
+      background: var(--bg-elevated);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-bar-inner {
+      height: 100%;
+      background: linear-gradient(90deg, var(--kafka-orange), var(--yellow));
+      border-radius: 2px;
+      transition: width 0.6s cubic-bezier(.4, 0, .2, 1);
+      width: 0%;
+    }
+
+    .progress-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    #menu-toggle {
+      display: none;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--kafka-orange);
+      cursor: pointer;
+      padding: 6px 11px;
+      border-radius: 5px;
+      font-size: 1.1rem;
+    }
+
+    /* ── LAYOUT ── */
+    .app {
+      display: flex;
+      padding-top: 58px;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-height: calc(100vh - 58px);
+      position: fixed;
+      top: 58px;
+      left: 0;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      transition: transform 0.3s ease;
+      z-index: 90;
+    }
+
+    .sidebar-inner {
+      padding: 14px 0 100px;
+    }
+
+    .sidebar-group-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      color: var(--text-muted);
+      padding: 14px 22px 5px;
+      margin-top: 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 22px;
+      cursor: pointer;
+      transition: all 0.18s;
+      border-left: 3px solid transparent;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.97rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      color: var(--text-muted);
+      user-select: none;
+      text-decoration: none;
+    }
+
+    .nav-item:hover {
+      background: var(--kafka-orange-glow2);
+      color: var(--text-primary);
+      border-left-color: rgba(232, 118, 43, 0.4);
+    }
+
+    .nav-item.active {
+      background: var(--kafka-orange-glow);
+      color: var(--kafka-orange);
+      border-left-color: var(--kafka-orange);
+    }
+
+    .nav-item.done {
+      color: var(--green);
+    }
+
+    .nav-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.66rem;
+      color: var(--text-muted);
+      min-width: 22px;
+    }
+
+    .nav-check {
+      margin-left: auto;
+      font-size: 0.73rem;
+      color: var(--text-muted);
+    }
+
+    .nav-item.done .nav-check {
+      color: var(--green);
+    }
+
+    /* ── MAIN ── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      min-height: calc(100vh - 58px);
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      padding: 72px 70px 60px;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero-noise {
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .hero-glow {
+      position: absolute;
+      top: -80px;
+      right: 100px;
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(232, 118, 43, 0.1) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--kafka-orange);
+      border: 1px solid var(--border-bright);
+      background: var(--kafka-orange-glow2);
+      border-radius: 3px;
+      padding: 5px 14px;
+      margin-bottom: 22px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      animation: fadeSlideDown 0.6s ease both;
+    }
+
+    .hero-eyebrow span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--kafka-orange);
+      display: inline-block;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    .hero h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: clamp(2.8rem, 6vw, 4.8rem);
+      line-height: 0.95;
+      letter-spacing: -1px;
+      text-transform: uppercase;
+      animation: fadeSlideUp 0.7s ease 0.1s both;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: var(--kafka-orange);
+      position: relative;
+      display: inline-block;
+    }
+
+    .hero-tagline {
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      margin-top: 16px;
+      max-width: 520px;
+      line-height: 1.65;
+      animation: fadeSlideUp 0.7s ease 0.2s both;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 40px;
+      margin-top: 36px;
+      animation: fadeSlideUp 0.7s ease 0.3s both;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .stat-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 2rem;
+      color: var(--kafka-orange);
+      letter-spacing: 1px;
+    }
+
+    .stat-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .hero-divider {
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--kafka-orange), transparent);
+      margin-top: 28px;
+    }
+
+    @keyframes fadeSlideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* ── MODULE GRID ── */
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+      gap: 14px;
+      padding: 44px 70px;
+    }
+
+    .module-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 22px;
+      cursor: pointer;
+      transition: all 0.22s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .module-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--kafka-orange), var(--yellow));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .module-card:hover {
+      border-color: var(--border-bright);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .module-card:hover::after {
+      transform: scaleX(1);
+    }
+
+    .mc-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .mc-icon {
+      width: 42px;
+      height: 42px;
+      background: var(--kafka-orange-glow);
+      border: 1px solid var(--border-bright);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .mc-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .mc-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.67rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .mc-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: 0.3px;
+    }
+
+    .mc-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      font-style: italic;
+    }
+
+    .mc-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    .mc-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .mc-dot.done {
+      background: var(--green);
+    }
+
+    /* ── LESSON ── */
+    .lesson {
+      display: none;
+      padding: 52px 70px 90px;
+      max-width: 960px;
+      animation: fadeSlideUp 0.35s ease both;
+    }
+
+    .lesson.active {
+      display: block;
+    }
+
+    .lesson-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .lesson-badge {
+      min-width: 50px;
+      height: 50px;
+      background: var(--kafka-orange);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 1rem;
+      color: var(--bg-void);
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+
+    .lesson-title-wrap h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 2.4rem;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .lesson-sub {
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    .lesson-body {
+      line-height: 1.78;
+    }
+
+    .lesson-body p {
+      color: var(--text-secondary);
+      margin: 16px 0;
+      font-size: 0.95rem;
+    }
+
+    .lesson-body strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .lesson-body h3 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--kafka-orange);
+      margin: 36px 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .lesson-body h3::before {
+      content: '//';
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.85rem;
+      opacity: 0.5;
+    }
+
+    .lesson-body h4 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.3px;
+      color: var(--text-primary);
+      margin: 20px 0 8px;
+    }
+
+    .lesson-body ul,
+    .lesson-body ol {
+      padding-left: 22px;
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+    }
+
+    .lesson-body li {
+      margin: 7px 0;
+    }
+
+    .lesson-body li strong {
+      color: var(--text-primary);
+    }
+
+    /* ── CODE ── */
+    .code-block {
+      position: relative;
+      margin: 22px 0;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #0f0d09;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 16px;
+      background: rgba(255, 255, 255, 0.025);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .code-lang {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--kafka-orange);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .code-filename {
+      color: var(--text-muted);
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .copy-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.67rem;
+      padding: 3px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      border-color: var(--kafka-orange);
+      color: var(--kafka-orange);
+    }
+
+    .copy-btn.copied {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .code-block pre {
+      margin: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+    }
+
+    .code-block pre code.hljs {
+      padding: 20px 22px !important;
+      font-size: 0.835rem !important;
+      font-family: 'IBM Plex Mono', monospace !important;
+      line-height: 1.7 !important;
+      background: transparent !important;
+    }
+
+    /* ── CALLOUT ── */
+    .callout {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 15px 18px;
+      border-radius: 5px;
+      margin: 20px 0;
+      font-size: 0.875rem;
+    }
+
+    .callout.info {
+      background: rgba(91, 164, 207, 0.07);
+      border-left: 3px solid var(--blue);
+    }
+
+    .callout.warn {
+      background: rgba(245, 200, 66, 0.07);
+      border-left: 3px solid var(--yellow);
+    }
+
+    .callout.tip {
+      background: rgba(82, 214, 138, 0.07);
+      border-left: 3px solid var(--green);
+    }
+
+    .callout.fire {
+      background: rgba(232, 118, 43, 0.09);
+      border-left: 3px solid var(--kafka-orange);
+    }
+
+    .callout.danger {
+      background: rgba(255, 77, 77, 0.07);
+      border-left: 3px solid var(--kafka-red);
+    }
+
+    .callout-icon {
+      font-size: 1rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .callout-body {
+      color: var(--text-secondary);
+      line-height: 1.65;
+      font-size: 0.87rem;
+    }
+
+    .callout-body strong {
+      color: var(--text-primary);
+    }
+
+    .callout-body code {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8em;
+      color: var(--kafka-orange);
+      background: var(--bg-elevated);
+      padding: 1px 6px;
+      border-radius: 3px;
+    }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 22px 0;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+    }
+
+    th {
+      background: var(--bg-elevated);
+      color: var(--kafka-orange);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 10px 16px;
+      border-bottom: 1px solid rgba(232, 118, 43, 0.07);
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:nth-child(even) td {
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    /* ── TAGS ── */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      background: var(--kafka-orange-glow);
+      border: 1px solid var(--border-bright);
+      color: var(--kafka-orange);
+      border-radius: 3px;
+      padding: 2px 9px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.73rem;
+      vertical-align: middle;
+    }
+
+    .tag.green {
+      background: rgba(82, 214, 138, 0.08);
+      border-color: rgba(82, 214, 138, 0.3);
+      color: var(--green);
+    }
+
+    .tag.blue {
+      background: rgba(91, 164, 207, 0.08);
+      border-color: rgba(91, 164, 207, 0.3);
+      color: var(--blue);
+    }
+
+    .tag.yellow {
+      background: rgba(245, 200, 66, 0.08);
+      border-color: rgba(245, 200, 66, 0.3);
+      color: var(--yellow);
+    }
+
+    .tag.red {
+      background: rgba(255, 77, 77, 0.08);
+      border-color: rgba(255, 77, 77, 0.3);
+      color: var(--kafka-red);
+    }
+
+    /* ── CONCEPT GRID ── */
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+      margin: 18px 0;
+    }
+
+    .concept-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 18px;
+      transition: all 0.2s;
+    }
+
+    .concept-card:hover {
+      border-color: var(--border-bright);
+      transform: translateY(-2px);
+    }
+
+    .concept-card-icon {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+
+    .concept-card h4 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.3px;
+      margin-bottom: 5px;
+    }
+
+    .concept-card p {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    /* ── ARCHITECTURE DIAGRAM ── */
+    .arch-diagram {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 28px;
+      margin: 22px 0;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      overflow-x: auto;
+      line-height: 1.8;
+    }
+
+    .arch-diagram .arch-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .arch-diagram .hi {
+      color: var(--kafka-orange);
+    }
+
+    .arch-diagram .hi2 {
+      color: var(--yellow);
+    }
+
+    .arch-diagram .hi3 {
+      color: var(--green);
+    }
+
+    .arch-diagram .hi4 {
+      color: var(--blue);
+    }
+
+    .arch-diagram .dim {
+      color: var(--text-muted);
+    }
+
+    /* ── QUIZ ── */
+    .quiz-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 24px;
+      margin: 28px 0;
+    }
+
+    .quiz-card .quiz-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--yellow);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .quiz-question {
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    .quiz-opts {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .quiz-opt {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .quiz-opt:hover {
+      border-color: var(--kafka-orange);
+      color: var(--text-primary);
+    }
+
+    .quiz-opt.correct {
+      border-color: var(--green);
+      color: var(--green);
+      background: rgba(82, 214, 138, 0.07);
+    }
+
+    .quiz-opt.wrong {
+      border-color: var(--kafka-red);
+      color: var(--kafka-red);
+      background: rgba(255, 77, 77, 0.07);
+    }
+
+    .quiz-result {
+      margin-top: 12px;
+      font-size: 0.82rem;
+      font-family: 'IBM Plex Mono', monospace;
+      padding: 9px 13px;
+      border-radius: 5px;
+      display: none;
+    }
+
+    .quiz-result.show {
+      display: block;
+    }
+
+    .quiz-result.ok {
+      background: rgba(82, 214, 138, 0.08);
+      color: var(--green);
+    }
+
+    .quiz-result.fail {
+      background: rgba(255, 77, 77, 0.08);
+      color: var(--kafka-red);
+    }
+
+    /* ── LESSON NAV ── */
+    .lesson-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 52px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: 4px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .nav-btn.prev {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    .nav-btn.prev:hover {
+      border-color: var(--border-bright);
+      color: var(--text-primary);
+    }
+
+    .nav-btn.next {
+      background: var(--kafka-orange);
+      border: 1px solid var(--kafka-orange);
+      color: var(--bg-void);
+      font-weight: 600;
+    }
+
+    .nav-btn.next:hover {
+      background: #f0892e;
+    }
+
+    .done-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 16px;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      border-radius: 4px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .done-btn:hover {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .done-btn.done {
+      border-color: var(--green);
+      color: var(--green);
+      background: rgba(82, 214, 138, 0.07);
+    }
+
+    /* ── INLINE CODE ── */
+    code:not(.hljs) {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.82em;
+      background: var(--bg-elevated);
+      color: var(--kafka-orange);
+      padding: 2px 7px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+    }
+
+    /* ── COMPARE ── */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 16px 0;
+    }
+
+    .compare-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+    }
+
+    .compare-box h5 {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    @media(max-width:600px) {
+      .compare-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ── STEP LIST ── */
+    .steps {
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+      margin: 14px 0;
+    }
+
+    .steps li {
+      counter-increment: step;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+    }
+
+    .steps li:last-child {
+      border-bottom: none;
+    }
+
+    .steps li::before {
+      content: counter(step, "0" counter(step));
+      min-width: 28px;
+      height: 28px;
+      background: var(--kafka-orange-glow);
+      border: 1px solid var(--border-bright);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--kafka-orange);
+      flex-shrink: 0;
+    }
+
+    /* ── PARTITION VIZ ── */
+    .partition-viz {
+      display: flex;
+      gap: 12px;
+      margin: 18px 0;
+      flex-wrap: wrap;
+    }
+
+    .partition-col {
+      flex: 1;
+      min-width: 120px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .partition-header {
+      background: var(--bg-elevated);
+      padding: 7px 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--kafka-orange);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .partition-msg {
+      padding: 7px 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid rgba(232, 118, 43, 0.06);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .offset-num {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      min-width: 24px;
+    }
+
+    /* ── OVERLAY & RESPONSIVE ── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 80;
+    }
+
+    .overlay.show {
+      display: block;
+    }
+
+    @media(max-width:768px) {
+      :root {
+        --sidebar-w: 0px;
+      }
+
+      .sidebar {
+        transform: translateX(-300px);
+        width: 300px;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main {
+        margin-left: 0;
+      }
+
+      #menu-toggle {
+        display: block;
+      }
+
+      .hero {
+        padding: 36px 22px 36px;
+      }
+
+      .lesson {
+        padding: 32px 22px 60px;
+      }
+
+      .module-grid {
+        padding: 22px;
+      }
+
+      .hero-stats {
+        gap: 24px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Streaming background lines -->
+  <div class="stream-bg" id="stream-bg"></div>
+
+  <header>
+    <button id="menu-toggle" onclick="toggleSidebar()">☰</button>
+    <div class="header-logo">
+      <div class="logo-icon">⚡</div>
+      Kafka Mastery
+    </div>
+    <div class="header-right">
+      <div class="progress-wrap">
+        <div class="progress-bar-outer">
+          <div class="progress-bar-inner" id="prog-bar"></div>
+        </div>
+        <span class="progress-label" id="prog-label">0 / 15</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+  <div class="app">
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-inner">
+        <div class="sidebar-group-label">Inicio</div>
+        <a class="nav-item active" onclick="showHome()" href="javascript:void(0)">
+          <span class="nav-num">00</span> Vista General
+          <span class="nav-check" id="chk-home">—</span>
+        </a>
+
+        <div class="sidebar-group-label">Fundamentos</div>
+        <a class="nav-item" onclick="gotoLesson(1)" href="javascript:void(0)"><span class="nav-num">01</span> ¿Qué es
+          Kafka?<span class="nav-check" id="chk-1">—</span></a>
+        <a class="nav-item" onclick="gotoLesson(2)" href="javascript:void(0)"><span class="nav-num">02</span>
+          Arquitectura Core<span class="nav-check" id="chk-2">—</span></a>
+        <a class="nav-item" onclick="gotoLesson(3)" href="javascript:void(0)"><span class="nav-num">03</span> Topics y
+          Particiones<span class="nav-check" id="chk-3">—</span></a>
+        <a class="nav-item" onclick="gotoLesson(4)" href="javascript:void(0)"><span class="nav-num">04</span>
+          Producers<span class="nav-check" id="chk-4">—</span></a>
+        <a class="nav-item" onclick="gotoLesson(5)" href="javascript:void(0)"><span class="nav-num">05</span> Consumers
+          y Grupos<span class="nav-check" id="chk-5">—</span></a>
+
+        <div class="sidebar-group-label">Internals</div>
+        <a class="nav-item" onclick="gotoLesson(6)" href="javascript:void(0)"><span class="nav-num">06</span>
+          Replicación y Durabilidad<span class="nav-check" id="chk-6">—</span></a>
+        <a class="nav-item" onclick="gotoLesson(7)" href="javascript:void(0)"><span class="nav-num">07</span> Offsets y
+          Retención<span class="nav-check" id="chk-7">—</span></a>
+        <a class="nav-item" onclick="gotoLesson(8)" href="javascript:void(0)"><span class="nav-num">08</span>
+          Serialización y Schemas<span class="nav-check" id="chk-8">—</span></a>
+
+        <div class="sidebar-group-label">Kafka en Práctica</div>
+        <a class="nav-item" onclick="gotoLesson(9)" href="javascript:void(0)"><span class="nav-num">09</span> Kafka con
+          Docker<span class="nav-check" id="chk-9">—</span></a>
+        <a class="nav-item" onclick="gotoLesson(10)" href="javascript:void(0)"><span class="nav-num">10</span> Kafka con
+          Go<span class="nav-check" id="chk-10">—</span></a>
+        <a class="nav-item" onclick="gotoLesson(11)" href="javascript:void(0)"><span class="nav-num">11</span> Kafka
+          Streams<span class="nav-check" id="chk-11">—</span></a>
+        <a class="nav-item" onclick="gotoLesson(12)" href="javascript:void(0)"><span class="nav-num">12</span> Kafka
+          Connect<span class="nav-check" id="chk-12">—</span></a>
+
+        <div class="sidebar-group-label">Producción</div>
+        <a class="nav-item" onclick="gotoLesson(13)" href="javascript:void(0)"><span class="nav-num">13</span> Patrones
+          de Diseño<span class="nav-check" id="chk-13">—</span></a>
+        <a class="nav-item" onclick="gotoLesson(14)" href="javascript:void(0)"><span class="nav-num">14</span>
+          Seguridad<span class="nav-check" id="chk-14">—</span></a>
+        <a class="nav-item" onclick="gotoLesson(15)" href="javascript:void(0)"><span class="nav-num">15</span> Monitoreo
+          y Operaciones<span class="nav-check" id="chk-15">—</span></a>
+      </div>
+    </nav>
+
+    <main class="main">
+
+      <!-- HOME -->
+      <div id="home-screen">
+        <div class="hero">
+          <div class="hero-noise"></div>
+          <div class="hero-glow"></div>
+          <div class="hero-content">
+            <div class="hero-eyebrow"><span></span>Apache Kafka 3.x · Curso Completo · Español</div>
+            <h1>Mensajería<br>de <em>Eventos</em><br>a Escala</h1>
+            <p class="hero-tagline">De los conceptos fundamentales al despliegue en producción. Aprende Kafka desde
+              cero, incluyendo integración completa con Go para construir microservicios orientados a eventos.</p>
+            <div class="hero-divider"></div>
+            <div class="hero-stats">
+              <div class="stat"><span class="stat-num">15</span><span class="stat-label">Módulos</span></div>
+              <div class="stat"><span class="stat-num">70+</span><span class="stat-label">Ejemplos</span></div>
+              <div class="stat"><span class="stat-num">∞</span><span class="stat-label">Progreso guardado</span></div>
+              <div class="stat"><span class="stat-num">Go</span><span class="stat-label">Integración</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="module-grid" id="module-grid"></div>
+      </div>
+
+      <!-- LESSONS CONTAINER -->
+      <div id="lessons-wrap">
+
+        <!-- ═══ LESSON 1 ═══ -->
+        <div class="lesson" id="lesson-1">
+          <div class="lesson-header">
+            <div class="lesson-badge">01</div>
+            <div class="lesson-title-wrap">
+              <h2>¿Qué es Kafka?</h2>
+              <div class="lesson-sub">Historia, propósito y por qué domina el streaming de eventos</div>
+            </div>
+          </div>
+          <div class="lesson-body">
+            <p>Apache Kafka es una <strong>plataforma distribuida de streaming de eventos</strong> creada originalmente
+              en LinkedIn y donada a la Apache Software Foundation en 2011. Hoy es el estándar de facto para sistemas de
+              mensajería de alto volumen y arquitecturas orientadas a eventos.</p>
+
+            <div class="concept-grid">
+              <div class="concept-card">
+                <div class="concept-card-icon">⚡</div>
+                <h4>Alto Rendimiento</h4>
+                <p>Millones de mensajes por segundo con latencias de milisegundos, gracias a escritura secuencial en
+                  disco.</p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">📦</div>
+                <h4>Durabilidad</h4>
+                <p>Los mensajes se persisten en disco y se replican. No se pierden aunque un broker falle.</p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">🔀</div>
+                <h4>Escalabilidad</h4>
+                <p>Escala horizontalmente añadiendo brokers y particiones sin downtime.</p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">🔁</div>
+                <h4>Replay</h4>
+                <p>Los consumers pueden releer mensajes del pasado. No es un queue tradicional.</p>
+              </div>
+            </div>
+
+            <h3>¿Por qué NO un sistema de mensajería tradicional?</h3>
+            <div class="compare-grid">
+              <div class="compare-box">
+                <h5>Queue Tradicional (RabbitMQ)</h5>
+                <ul style="font-size:0.82rem;color:var(--text-secondary);padding-left:16px;">
+                  <li>Mensaje se borra al consumirse</li>
+                  <li>Push model — el broker empuja</li>
+                  <li>No replay de mensajes</li>
+                  <li>Escala con dificultad</li>
+                  <li>Ideal: tasks/jobs discretos</li>
+                </ul>
+              </div>
+              <div class="compare-box" style="border-color:var(--border-bright);">
+                <h5>Kafka (Log distribuido)</h5>
+                <ul style="font-size:0.82rem;color:var(--text-secondary);padding-left:16px;">
+                  <li>Mensaje persiste (configurable)</li>
+                  <li>Pull model — el consumer jala</li>
+                  <li>Replay completo posible</li>
+                  <li>Escala infinitamente</li>
+                  <li>Ideal: streams, eventos, auditoría</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3>Casos de uso reales</h3>
+            <div class="table-wrap">
+              <table>
+                <tr>
+                  <th>Empresa</th>
+                  <th>Uso</th>
+                  <th>Volumen</th>
+                </tr>
+                <tr>
+                  <td><strong>LinkedIn</strong></td>
+                  <td>Tracking de actividad de usuarios, métricas operacionales</td>
+                  <td>7 billones de mensajes/día</td>
+                </tr>
+                <tr>
+                  <td><strong>Uber</strong></td>
+                  <td>Geolocalización en tiempo real, precios dinámicos</td>
+                  <td>1 trillón de mensajes/año</td>
+                </tr>
+                <tr>
+                  <td><strong>Netflix</strong></td>
+                  <td>Monitoreo, pipeline de datos, recomendaciones</td>
+                  <td>Billones de eventos/día</td>
+                </tr>
+                <tr>
+                  <td><strong>Banco de América</strong></td>
+                  <td>Procesamiento de transacciones, detección de fraude</td>
+                  <td>Sub-segundo latencia</td>
+                </tr>
+              </table>
+            </div>
+
+            <h3>Kafka como "sistema nervioso" de microservicios</h3>
+            <div class="arch-diagram">
+              <div class="arch-title">Arquitectura Event-Driven con Kafka</div>
+              <span class="hi">[Pedido Service]</span> ──publish──▶ <span class="hi2">kafka: orders</span>
+              ──subscribe──▶ <span class="hi3">[Inventario Service]</span>
+              │ └──subscribe──▶ <span class="hi3">[Notificación Service]</span>
+              │ └──subscribe──▶ <span class="hi3">[Analytics Service]</span>
+              │
+              <span class="hi">[Pago Service]</span> ──publish──▶ <span class="hi2">kafka: payments</span>
+              ──subscribe──▶ <span class="hi3">[Fraude Service]</span>
+              └──subscribe──▶ <span class="hi3">[Contabilidad Service]</span>
+
+              <span class="dim">└─ Los productores y consumidores NO se conocen entre sí (desacoplamiento total)</span>
+            </div>
+
+            <div class="callout fire">
+              <div class="callout-icon">🔥</div>
+              <div class="callout-body"><strong>Kafka + Go = Potencia máxima.</strong> La combinación de la concurrencia
+                nativa de Go (goroutines) con el modelo de particiones de Kafka permite procesar millones de mensajes
+                con un footprint de memoria mínimo.</div>
+            </div>
+
+            <div class="quiz-card">
+              <div class="quiz-title">⚡ Pregunta Rápida</div>
+              <div class="quiz-question">¿Qué ocurre con un mensaje en Kafka cuando un consumer lo lee?</div>
+              <div class="quiz-opts">
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) El mensaje se elimina inmediatamente del topic
+                </div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) El mensaje permanece en el topic según la
+                  política de retención configurada</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) El mensaje se marca como "leído" y no puede ser
+                  leído de nuevo</div>
+              </div>
+              <div class="quiz-result" id="qr-1">✅ Correcto. Kafka es un log inmutable. Los mensajes persisten y
+                CUALQUIER consumer puede releerlos. Esto permite replay, auditoría y múltiples consumidores
+                independientes del mismo stream.</div>
+            </div>
+          </div>
+          <div class="lesson-nav">
+            <button class="nav-btn prev" onclick="showHome()">← Vista General</button>
+            <button class="done-btn" id="done-1" onclick="markDone(1)">✓ Marcar visto</button>
+            <button class="nav-btn next" onclick="gotoLesson(2)">Arquitectura Core →</button>
+          </div>
+        </div>
+
+        <!-- ═══ LESSON 2 ═══ -->
+        <div class="lesson" id="lesson-2">
+          <div class="lesson-header">
+            <div class="lesson-badge">02</div>
+            <div class="lesson-title-wrap">
+              <h2>Arquitectura Core</h2>
+              <div class="lesson-sub">Brokers, clusters, ZooKeeper/KRaft y el log distribuido</div>
+            </div>
+          </div>
+          <div class="lesson-body">
+            <p>La arquitectura de Kafka se basa en un <strong>clúster de brokers distribuidos</strong> que almacenan y sirven streams de mensajes. Cada componente tiene un rol bien definido: los <strong>brokers</strong> persisten los datos, el <strong>Controller</strong> gestiona el estado del clúster, y los <strong>clients</strong> (producers y consumers) escriben y leen mensajes. Entender cómo interactúan estos piezas es esencial para diseñar sistemas robustos.</p>
+            <h3>Componentes principales</h3>
+            <div class="concept-grid">
+              <div class="concept-card">
+                <div class="concept-card-icon">🖥️</div>
+                <h4>Broker</h4>
+                <p>Un servidor Kafka. El cluster tiene 3+ brokers en producción. Cada broker tiene un ID único.</p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">📚</div>
+                <h4>Topic</h4>
+                <p>Canal de mensajes nombrado. Similar a una tabla de base de datos o un directorio de archivos.</p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">🗂️</div>
+                <h4>Partition</h4>
+                <p>División física de un topic. Cada partición es un log ordenado e inmutable.</p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">👑</div>
+                <h4>Controller</h4>
+                <p>Broker especial que gestiona el estado del cluster: elecciones de líder, asignación de particiones.
+                </p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">📤</div>
+                <h4>Producer</h4>
+                <p>Aplicación que publica (escribe) mensajes a topics.</p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">📥</div>
+                <h4>Consumer</h4>
+                <p>Aplicación que suscribe y lee mensajes de topics.</p>
+              </div>
+            </div>
+
+            <h3>El Commit Log</h3>
+            <p>El corazón de Kafka es el <strong>commit log distribuido</strong>. Cada partición es un archivo log
+              append-only. Los mensajes se añaden al final y se identifican por su <strong>offset</strong> (posición en
+              el log). Este diseño permite:</p>
+            <ul>
+              <li><strong>Escritura secuencial</strong> en disco — más rápida que escritura aleatoria incluso vs SSD
+              </li>
+              <li><strong>Lecturas O(1)</strong> por offset — acceso directo sin búsqueda</li>
+              <li><strong>Replay</strong> — cualquier consumer puede volver al offset 0</li>
+            </ul>
+
+            <div class="arch-diagram">
+              <div class="arch-title">Partition como Commit Log</div>
+              offset: <span class="hi2">0</span> <span class="hi2">1</span> <span class="hi2">2</span> <span
+                class="hi2">3</span> <span class="hi2">4</span> <span class="dim">← nuevo</span>
+              ┌──────────┬──────────┬──────────┬──────────┬──────────┐
+              │ <span class="hi3">msg:pedido</span>│<span class="hi3">msg:pago </span> │<span
+                class="hi3">msg:envio</span> │<span class="hi3">msg:entrega</span>│<span class="hi3">msg:review</span>│
+              <span class="dim">← append only</span>
+              └──────────┴──────────┴──────────┴──────────┴──────────┘
+              ▲ ▲
+              <span class="hi">Consumer A</span> (offset 0) <span class="hi4">Consumer B</span> (offset 3)
+              <span class="dim">— puede releer desde el inicio</span> <span class="dim">— solo lee los nuevos</span>
+            </div>
+
+            <h3>ZooKeeper vs KRaft</h3>
+            <div class="callout warn">
+              <div class="callout-icon">⚠️</div>
+              <div class="callout-body"><strong>Kafka 3.x migró a KRaft (Kafka Raft).</strong> ZooKeeper fue deprecado
+                en Kafka 2.8 y eliminado en Kafka 4.0. En producción moderna usa solo KRaft — no requiere ZooKeeper.
+                Toda la metadata se gestiona internamente.</div>
+            </div>
+
+            <div class="compare-grid">
+              <div class="compare-box">
+                <h5>Modo Legacy (ZooKeeper)</h5>
+                <ul style="font-size:0.82rem;color:var(--text-secondary);padding-left:16px;">
+                  <li>Requiere proceso separado</li>
+                  <li>Más complejo de operar</li>
+                  <li>Kafka ≤ 2.7</li>
+                  <li>Topología: Kafka + ZK cluster</li>
+                </ul>
+              </div>
+              <div class="compare-box" style="border-color:var(--border-bright);">
+                <h5>KRaft Mode ✅ Recomendado</h5>
+                <ul style="font-size:0.82rem;color:var(--text-secondary);padding-left:16px;">
+                  <li>Sin dependencias externas</li>
+                  <li>Arranque más rápido</li>
+                  <li>Kafka ≥ 3.3 (GA)</li>
+                  <li>Topología: solo Kafka cluster</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3>Clusters en producción</h3>
+            <div class="arch-diagram">
+              <div class="arch-title">Cluster Kafka 3-brokers (KRaft)</div>
+              ┌─────────────────────────────────────────────────────┐
+              │ <span class="hi">Kafka Cluster</span> │
+              │ │
+              │ ┌───────────┐ ┌───────────┐ ┌───────────┐ │
+              │ │<span class="hi2">Broker-1</span> │ │<span class="hi2">Broker-2</span> │ │<span
+                class="hi2">Broker-3</span> │ │
+              │ │(Controller)│ │ │ │ │ │
+              │ │ Topic-A P0 │ │ Topic-A P1│ │ Topic-A P2│ │
+              │ │ Topic-B P0 │ │ Topic-B P1│ │ Topic-B P0│ │
+              │ │ (replica)│ │ (líder) │ │ (replica)│ │
+              │ └───────────┘ └───────────┘ └───────────┘ │
+              └─────────────────────────────────────────────────────┘
+              ▲ │
+              <span class="hi">Producers</span> ─────────────────────────▶ <span class="hi3">Consumers</span>
+            </div>
+            <div class="quiz-card">
+              <div class="quiz-title">⚡ Pregunta Rápida</div>
+              <div class="quiz-question">¿Cuál es la función del Kafka <strong>Controller</strong> en modo KRaft?</div>
+              <div class="quiz-opts">
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Almacenar todos los mensajes del clúster en memoria para acceso rápido</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) Gestionar el estado del clúster: elecciones de líder de partición y metadatos de réplicas</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Serializar y deserializar mensajes entre producers y consumers</div>
+              </div>
+              <div class="quiz-result" id="qr-2">✅ Correcto. En modo KRaft, el Controller es un broker especial elegido entre los nodos. Gestiona las elecciones de líder de partición y mantiene el estado del clúster internamente, sin necesidad de ZooKeeper.</div>
+            </div>
+          </div>
+          <div class="lesson-nav">
+            <button class="nav-btn prev" onclick="gotoLesson(1)">← ¿Qué es Kafka?</button>
+            <button class="done-btn" id="done-2" onclick="markDone(2)">✓ Marcar visto</button>
+            <button class="nav-btn next" onclick="gotoLesson(3)">Topics y Particiones →</button>
+          </div>
+        </div>
+
+        <!-- ═══ LESSON 3 ═══ -->
+        <div class="lesson" id="lesson-3">
+          <div class="lesson-header">
+            <div class="lesson-badge">03</div>
+            <div class="lesson-title-wrap">
+              <h2>Topics y Particiones</h2>
+              <div class="lesson-sub">La unidad fundamental del diseño Kafka</div>
+            </div>
+          </div>
+          <div class="lesson-body">
+            <p>El diseño correcto de topics y particiones es <strong>la decisión más importante en Kafka</strong>.
+              Afecta rendimiento, escalabilidad, orden de mensajes y paralelismo.</p>
+
+            <h3>Topics</h3>
+            <p>Un topic es una <strong>categoría o feed de mensajes</strong>. Los productores publican en topics; los
+              consumidores se suscriben a topics. Un topic puede tener múltiples particiones distribuidas en el cluster.
+            </p>
+
+            <h4>Convenciones de nombrado</h4>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">nomenclatura</div><button class="copy-btn"
+                  onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Patrón recomendado: dominio.entidad.evento
+pedidos.ordenes.creadas
+pedidos.ordenes.actualizadas
+pagos.transacciones.procesadas
+usuarios.cuentas.registradas
+inventario.productos.actualizados
+
+# Patrones para microservicios
+{servicio}.{recurso}.{accion}
+{dominio}.{subdomain}.{evento}
+
+# Comandos vs Eventos (importante para CQRS)
+cmd.pedidos.crear-orden      # comando (imperativo)
+evt.pedidos.orden-creada     # evento (pasado)</code></pre>
+            </div>
+
+            <h3>Particiones</h3>
+            <p>Cada topic se divide en <strong>N particiones</strong>. Cada partición es un log independiente y
+              ordenado. El número de particiones determina el paralelismo máximo de consumo.</p>
+
+            <div class="partition-viz">
+              <div class="partition-col">
+                <div class="partition-header">Partición 0</div>
+                <div class="partition-msg"><span class="offset-num">off:0</span>user:101</div>
+                <div class="partition-msg"><span class="offset-num">off:1</span>user:201</div>
+                <div class="partition-msg"><span class="offset-num">off:2</span>user:301</div>
+              </div>
+              <div class="partition-col">
+                <div class="partition-header">Partición 1</div>
+                <div class="partition-msg"><span class="offset-num">off:0</span>user:102</div>
+                <div class="partition-msg"><span class="offset-num">off:1</span>user:202</div>
+                <div class="partition-msg"><span class="offset-num">off:2</span>user:302</div>
+              </div>
+              <div class="partition-col">
+                <div class="partition-header">Partición 2</div>
+                <div class="partition-msg"><span class="offset-num">off:0</span>user:103</div>
+                <div class="partition-msg"><span class="offset-num">off:1</span>user:203</div>
+                <div class="partition-msg"><span class="offset-num">off:2</span>user:303</div>
+              </div>
+            </div>
+
+            <h3>¿Cuántas particiones usar?</h3>
+            <div class="callout info">
+              <div class="callout-icon">📐</div>
+              <div class="callout-body">
+                <strong>Fórmula guía:</strong><br>
+                <code>particiones = max(throughput_target / throughput_por_partition, max_consumers_paralelos)</code><br><br>
+                <strong>Reglas prácticas:</strong>
+                <ul style="margin-top:6px">
+                  <li>Mínimo <strong>1 partición por consumer</strong> en el grupo</li>
+                  <li>En producción: empieza con <strong>3–12 particiones</strong></li>
+                  <li>Topics de alta carga: <strong>30–100+ particiones</strong></li>
+                  <li>Más particiones = más paralelismo pero más overhead de metadata</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3>Partitioning Keys — Orden garantizado</h3>
+            <p>El orden de mensajes en Kafka está garantizado <strong>dentro de una partición</strong>, NO a través del
+              topic. La clave de partición determina a qué partición va cada mensaje.</p>
+
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">concepto</div><button class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Sin clave → round-robin entre particiones → SIN orden global
+Producer → P0: msg1, msg3
+         → P1: msg2, msg4
+
+# Con clave "order_id" → misma key = misma partición → ORDEN garantizado
+Producer key:"order-123" → P2: msg1(order-123), msg2(order-123), msg3(order-123)
+Producer key:"order-456" → P0: msg1(order-456), msg2(order-456)
+
+# La key se hashea: partition = hash(key) % num_partitions</code></pre>
+            </div>
+
+            <div class="callout warn">
+              <div class="callout-icon">⚠️</div>
+              <div class="callout-body"><strong>Hot partition:</strong> Si todas tus claves apuntan a la misma partición
+                (ej: clave es un enum con pocos valores), tendrás un desbalance. Diseña keys con alta cardinalidad:
+                <code>user_id</code>, <code>order_id</code>, <code>session_id</code>.</div>
+            </div>
+
+            <h3>Gestión de Topics — CLI</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">bash <span class="code-filename">kafka-topics.sh</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Crear topic
+kafka-topics.sh --create \
+  --bootstrap-server localhost:9092 \
+  --topic pedidos.ordenes.creadas \
+  --partitions 6 \
+  --replication-factor 3
+
+# Listar topics
+kafka-topics.sh --list --bootstrap-server localhost:9092
+
+# Describir topic (particiones, líderes, réplicas)
+kafka-topics.sh --describe \
+  --topic pedidos.ordenes.creadas \
+  --bootstrap-server localhost:9092
+
+# Aumentar particiones (solo se puede aumentar, NUNCA decrementar)
+kafka-topics.sh --alter \
+  --topic pedidos.ordenes.creadas \
+  --partitions 12 \
+  --bootstrap-server localhost:9092
+
+# Eliminar topic
+kafka-topics.sh --delete \
+  --topic pedidos.ordenes.creadas \
+  --bootstrap-server localhost:9092</code></pre>
+            </div>
+
+            <div class="quiz-card">
+              <div class="quiz-title">⚡ Pregunta Rápida</div>
+              <div class="quiz-question">Si un producer envía mensajes con <code>key="order-123"</code>, ¿qué garantiza Kafka sobre esos mensajes?</div>
+              <div class="quiz-opts">
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Los mensajes se distribuyen uniformemente entre todas las particiones del topic</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) Todos los mensajes con la misma key siempre van a la misma partición, garantizando orden entre ellos</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Kafka garantiza orden global en todas las particiones del topic sin importar la key</div>
+              </div>
+              <div class="quiz-result" id="qr-3">✅ Correcto. La fórmula <code>partición = hash(key) % num_particiones</code> asegura que la misma key siempre aterrice en la misma partición. El orden se garantiza <em>dentro de una partición</em>, no a nivel del topic completo.</div>
+            </div>
+          </div>
+          <div class="lesson-nav">
+            <button class="nav-btn prev" onclick="gotoLesson(2)">← Arquitectura Core</button>
+            <button class="done-btn" id="done-3" onclick="markDone(3)">✓ Marcar visto</button>
+            <button class="nav-btn next" onclick="gotoLesson(4)">Producers →</button>
+          </div>
+        </div>
+
+        <!-- ═══ LESSON 4 ═══ -->
+        <div class="lesson" id="lesson-4">
+          <div class="lesson-header">
+            <div class="lesson-badge">04</div>
+            <div class="lesson-title-wrap">
+              <h2>Producers</h2>
+              <div class="lesson-sub">Publicar mensajes: configuraciones, garantías de entrega y batching</div>
+            </div>
+          </div>
+          <div class="lesson-body">
+            <p>Un producer es cualquier aplicación que <strong>publica mensajes en topics de Kafka</strong>. Tiene
+              configuraciones críticas que determinan el balance entre rendimiento, latencia y durabilidad.</p>
+
+            <h3>Anatomía de un mensaje Kafka</h3>
+            <div class="table-wrap">
+              <table>
+                <tr>
+                  <th>Campo</th>
+                  <th>Tipo</th>
+                  <th>Descripción</th>
+                </tr>
+                <tr>
+                  <td><code>key</code></td>
+                  <td>bytes (nullable)</td>
+                  <td>Determina la partición destino. Si null → round-robin.</td>
+                </tr>
+                <tr>
+                  <td><code>value</code></td>
+                  <td>bytes</td>
+                  <td>El payload del mensaje. Puede ser JSON, Avro, Protobuf, etc.</td>
+                </tr>
+                <tr>
+                  <td><code>headers</code></td>
+                  <td>KV pairs</td>
+                  <td>Metadata: correlationId, tracingId, content-type, etc.</td>
+                </tr>
+                <tr>
+                  <td><code>timestamp</code></td>
+                  <td>int64 (ms)</td>
+                  <td>Tiempo de creación o ingesta. Usado para retención por tiempo.</td>
+                </tr>
+                <tr>
+                  <td><code>partition</code></td>
+                  <td>int32</td>
+                  <td>Partición de destino (calculada o explícita).</td>
+                </tr>
+                <tr>
+                  <td><code>offset</code></td>
+                  <td>int64</td>
+                  <td>Posición del mensaje en la partición (asignado por el broker).</td>
+                </tr>
+              </table>
+            </div>
+
+            <h3>Garantías de entrega (acks)</h3>
+            <p>La configuración <code>acks</code> controla cuándo el broker confirma la escritura:</p>
+            <div class="table-wrap">
+              <table>
+                <tr>
+                  <th>acks</th>
+                  <th>Semántica</th>
+                  <th>Rendimiento</th>
+                  <th>Riesgo de pérdida</th>
+                </tr>
+                <tr>
+                  <td><span class="tag red">0</span></td>
+                  <td>Fire and forget — sin confirmación</td>
+                  <td>🚀 Máximo</td>
+                  <td>Alta (si broker falla)</td>
+                </tr>
+                <tr>
+                  <td><span class="tag yellow">1</span></td>
+                  <td>Ack del líder solamente</td>
+                  <td>⚡ Alto</td>
+                  <td>Media (si líder falla antes de replicar)</td>
+                </tr>
+                <tr>
+                  <td><span class="tag green">all / -1</span></td>
+                  <td>Ack de todas las réplicas sincronizadas (ISR)</td>
+                  <td>🐢 Menor</td>
+                  <td>Mínima ✅ Recomendado para producción</td>
+                </tr>
+              </table>
+            </div>
+
+            <h3>Semánticas de entrega</h3>
+            <div class="table-wrap">
+              <table>
+                <tr>
+                  <th>Semántica</th>
+                  <th>Config</th>
+                  <th>Resultado</th>
+                  <th>Caso de uso</th>
+                </tr>
+                <tr>
+                  <td><strong>At-most-once</strong></td>
+                  <td>acks=0, no retry</td>
+                  <td>Puede perder mensajes</td>
+                  <td>Logs no críticos, métricas</td>
+                </tr>
+                <tr>
+                  <td><strong>At-least-once</strong></td>
+                  <td>acks=all, retries=MAX</td>
+                  <td>Duplicados posibles</td>
+                  <td>La mayoría de casos (idempotencia en consumer)</td>
+                </tr>
+                <tr>
+                  <td><strong>Exactly-once</strong></td>
+                  <td>enable.idempotence=true, transacciones</td>
+                  <td>Sin pérdidas ni dups</td>
+                  <td>Pagos, transacciones financieras</td>
+                </tr>
+              </table>
+            </div>
+
+            <h3>Batching y rendimiento</h3>
+            <div class="callout tip">
+              <div class="callout-icon">🚀</div>
+              <div class="callout-body"><strong>Kafka agrupa mensajes en batches</strong> antes de enviarlos, aumentando
+                dramáticamente el throughput. Los parámetros clave son <code>batch.size</code> (bytes por batch) y
+                <code>linger.ms</code> (tiempo máximo de espera para llenar el batch).</div>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">properties <span class="code-filename">producer.properties</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Configuración Producer de producción
+
+# Conexión
+bootstrap.servers=kafka1:9092,kafka2:9092,kafka3:9092
+
+# Durabilidad ✅ recomendado
+acks=all
+enable.idempotence=true      # Producer idempotente (evita duplicados por retry)
+retries=2147483647            # MAX_INT — reintentar indefinidamente
+retry.backoff.ms=100
+
+# Rendimiento
+batch.size=65536              # 64KB por batch (default: 16KB)
+linger.ms=5                   # esperar 5ms para llenar el batch
+compression.type=snappy       # compresión: none, gzip, snappy, lz4, zstd
+buffer.memory=33554432        # 32MB de buffer en memoria
+
+# Timeouts
+request.timeout.ms=30000
+delivery.timeout.ms=120000
+
+# Serialización
+key.serializer=org.apache.kafka.common.serialization.StringSerializer
+value.serializer=org.apache.kafka.common.serialization.ByteArraySerializer</code></pre>
+            </div>
+
+            <h3>Diagrama de flujo del Producer</h3>
+            <div class="arch-diagram">
+              <span class="hi">App</span> ─▶ send(record) ─▶ <span class="hi2">Serializer</span> ─▶ <span
+                class="hi2">Partitioner</span> ─▶ <span class="hi3">RecordAccumulator</span>
+              (hash(key)%n) (buffer de batches)
+              │
+              linger.ms o batch lleno
+              ▼
+              <span class="hi">Sender Thread</span> ─▶ <span class="hi4">Broker</span>
+              ─▶ ack ─▶ callback
+            </div>
+
+            <div class="quiz-card">
+              <div class="quiz-title">⚡ Pregunta Rápida</div>
+              <div class="quiz-question">¿Qué configuración de <code>acks</code> es la recomendada en producción para garantizar durabilidad sin perder mensajes?</div>
+              <div class="quiz-opts">
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) <code>acks=0</code> — fire and forget, máximo rendimiento</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">B) <code>acks=1</code> — solo el broker líder confirma la escritura</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">C) <code>acks=all</code> con <code>enable.idempotence=true</code> — confirmación de todas las réplicas sincronizadas (ISR)</div>
+              </div>
+              <div class="quiz-result" id="qr-4">✅ Correcto. <code>acks=all</code> espera confirmación de todas las réplicas en el ISR. Combinado con <code>enable.idempotence=true</code>, evita tanto la pérdida de mensajes como los duplicados por reintentos.</div>
+            </div>
+          </div>
+          <div class="lesson-nav">
+            <button class="nav-btn prev" onclick="gotoLesson(3)">← Topics y Particiones</button>
+            <button class="done-btn" id="done-4" onclick="markDone(4)">✓ Marcar visto</button>
+            <button class="nav-btn next" onclick="gotoLesson(5)">Consumers →</button>
+          </div>
+        </div>
+
+        <!-- ═══ LESSON 5 ═══ -->
+        <div class="lesson" id="lesson-5">
+          <div class="lesson-header">
+            <div class="lesson-badge">05</div>
+            <div class="lesson-title-wrap">
+              <h2>Consumers y Consumer Groups</h2>
+              <div class="lesson-sub">Leer mensajes, grupos de consumo y rebalanceo</div>
+            </div>
+          </div>
+          <div class="lesson-body">
+            <p>Los consumers leen mensajes de Kafka de forma <strong>activa (pull model)</strong>. La abstracción de
+              <strong>Consumer Group</strong> permite escalar el consumo horizontalmente y garantizar que cada mensaje
+              sea procesado por exactamente un consumer dentro del grupo.</p>
+
+            <h3>Consumer Groups</h3>
+            <div class="arch-diagram">
+              <span class="dim">Topic: pedidos (3 particiones)</span>
+              P0 ──▶ <span class="hi3">Consumer-1</span> ┐
+              P1 ──▶ <span class="hi3">Consumer-2</span> ├── <span class="hi">Group: procesamiento-pedidos</span>
+              P2 ──▶ <span class="hi3">Consumer-3</span> ┘
+
+              <span class="dim">Mismo topic, otro grupo independiente:</span>
+              P0 ──▶ <span class="hi2">Consumer-A</span> ┐
+              P1 ──▶ <span class="hi2">Consumer-B</span> ├── <span class="hi">Group: analytics-pedidos</span>
+              P2 ──▶ <span class="hi2">Consumer-B</span> ┘ <span class="dim">(2 consumers → 1 cubre 2
+                particiones)</span>
+
+              <span class="dim">Regla: una partición → máximo 1 consumer activo por grupo</span>
+              <span class="dim"> si consumers > particiones → algunos consumers idle</span>
+            </div>
+
+            <h3>Offset Management</h3>
+            <p>El <strong>offset</strong> es la posición del próximo mensaje a leer. Los consumers lo gestionan
+              explícitamente. Kafka guarda los offsets commiteados en el topic interno <code>__consumer_offsets</code>.
+            </p>
+            <div class="table-wrap">
+              <table>
+                <tr>
+                  <th>Configuración</th>
+                  <th>Comportamiento</th>
+                  <th>Cuándo usar</th>
+                </tr>
+                <tr>
+                  <td><code>enable.auto.commit=true</code></td>
+                  <td>Kafka hace commit automáticamente cada <code>auto.commit.interval.ms</code></td>
+                  <td>Casos simples, puede perder mensajes si el proceso falla antes del commit</td>
+                </tr>
+                <tr>
+                  <td><code>enable.auto.commit=false</code></td>
+                  <td>El consumer hace commit manualmente después de procesar</td>
+                  <td>✅ Producción — control total, at-least-once garantizado</td>
+                </tr>
+              </table>
+            </div>
+
+            <h3>Configuraciones clave del Consumer</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">properties <span class="code-filename">consumer.properties</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Conexión y grupo
+bootstrap.servers=kafka1:9092,kafka2:9092,kafka3:9092
+group.id=mi-servicio-consumer       # identificador del grupo
+client.id=mi-servicio-instancia-1
+
+# Offset inicial (cuando no hay offset previo)
+auto.offset.reset=earliest   # leer desde el principio
+# auto.offset.reset=latest   # solo mensajes nuevos
+
+# Commit manual (recomendado en producción)
+enable.auto.commit=false
+
+# Polling y heartbeat
+max.poll.records=500              # máximo mensajes por poll()
+max.poll.interval.ms=300000       # 5 min — tiempo máximo entre polls
+session.timeout.ms=45000          # timeout para detectar consumer muerto
+heartbeat.interval.ms=3000        # intervalo de heartbeat
+
+# Deserialización
+key.deserializer=...StringDeserializer
+value.deserializer=...ByteArrayDeserializer</code></pre>
+            </div>
+
+            <h3>Rebalanceo</h3>
+            <p>El <strong>rebalanceo</strong> ocurre cuando cambia la composición del grupo (consumer entra/sale/falla).
+              Durante el rebalanceo, <strong>todos los consumers detienen el consumo</strong> (stop-the-world).
+              Estrategias:</p>
+            <div class="table-wrap">
+              <table>
+                <tr>
+                  <th>Estrategia</th>
+                  <th>Comportamiento</th>
+                  <th>Recomendación</th>
+                </tr>
+                <tr>
+                  <td><strong>Range</strong> (default)</td>
+                  <td>Asigna rangos contiguos de particiones</td>
+                  <td>Desbalanceo en tópicos con muchas particiones</td>
+                </tr>
+                <tr>
+                  <td><strong>RoundRobin</strong></td>
+                  <td>Distribuye uniformemente entre todos los consumers</td>
+                  <td>Mejor distribución, más movimientos</td>
+                </tr>
+                <tr>
+                  <td><strong>Sticky</strong></td>
+                  <td>Mínimos movimientos de particiones al rebalancear</td>
+                  <td>✅ Mejor rendimiento general</td>
+                </tr>
+                <tr>
+                  <td><strong>CooperativeSticky</strong></td>
+                  <td>Rebalanceo incremental, sin stop-the-world</td>
+                  <td>✅✅ Mejor para producción Kafka 2.4+</td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="quiz-card">
+              <div class="quiz-title">⚡ Pregunta Rápida</div>
+              <div class="quiz-question">Tienes un topic con 6 particiones y un Consumer Group con 8 consumers. ¿Qué
+                ocurre?</div>
+              <div class="quiz-opts">
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Error — no puede haber más consumers que
+                  particiones</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) 6 consumers activos, 2 en standby (idle)</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Kafka reparte las 6 particiones entre los 8
+                  consumers fraccionadamente</div>
+              </div>
+              <div class="quiz-result" id="qr-5">✅ Correcto. Una partición solo puede ser asignada a UN consumer por
+                grupo. Los consumers extra quedan en standby y tomarán el relevo si algún consumer activo falla.</div>
+            </div>
+          </div>
+          <div class="lesson-nav">
+            <button class="nav-btn prev" onclick="gotoLesson(4)">← Producers</button>
+            <button class="done-btn" id="done-5" onclick="markDone(5)">✓ Marcar visto</button>
+            <button class="nav-btn next" onclick="gotoLesson(6)">Replicación →</button>
+          </div>
+        </div>
+
+        <!-- ═══ LESSON 6 ═══ -->
+        <div class="lesson" id="lesson-6">
+          <div class="lesson-header">
+            <div class="lesson-badge">06</div>
+            <div class="lesson-title-wrap">
+              <h2>Replicación y Durabilidad</h2>
+              <div class="lesson-sub">ISR, factores de replicación y tolerancia a fallos</div>
+            </div>
+          </div>
+          <div class="lesson-body">
+            <p>La replicación es el mecanismo que hace a Kafka <strong>tolerante a fallos</strong>. Cada partición tiene
+              un broker líder y N réplicas (followers) en otros brokers.</p>
+
+            <h3>In-Sync Replicas (ISR)</h3>
+            <div class="arch-diagram">
+              <span class="arch-title">Partition 0 del topic "pedidos" — RF=3</span>
+
+              <span class="hi">Broker-1</span> (Líder P0) ◄── escrituras y lecturas
+              │ log: [0,1,2,3,4] ← offset latest = 4
+              │
+              ├──replicate──▶ <span class="hi2">Broker-2</span> (Follower P0)
+              │ log: [0,1,2,3,4] ✅ ISR
+              │
+              └──replicate──▶ <span class="hi3">Broker-3</span> (Follower P0)
+              log: [0,1,2,3] ⚠️ fuera del ISR (lag=1)
+
+              <span class="dim">ISR = {Broker-1, Broker-2} → acks=all requiere ack de AMBOS</span>
+              <span class="dim">Si Broker-1 falla → Broker-2 se convierte en nuevo líder</span>
+            </div>
+
+            <h3>Configuraciones de replicación</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">bash <span class="code-filename">configuración crítica</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Al crear el topic
+kafka-topics.sh --create \
+  --topic pedidos.ordenes.creadas \
+  --partitions 6 \
+  --replication-factor 3 \    # 3 copias — RF mínimo en producción
+  --bootstrap-server localhost:9092
+
+# Configuraciones del broker (server.properties)
+default.replication.factor=3
+min.insync.replicas=2          # mínimo 2 réplicas sincronizadas para aceptar writes
+                               # con RF=3, sobrevive fallo de 1 broker
+unclean.leader.election.enable=false  # evitar pérdida de datos
+                                       # (no elegir followers desactualizados como líder)</code></pre>
+            </div>
+
+            <div class="callout fire">
+              <div class="callout-icon">🛡️</div>
+              <div class="callout-body">
+                <strong>Combinación de oro para producción:</strong><br>
+                <code>replication-factor=3</code> + <code>min.insync.replicas=2</code> + <code>acks=all</code><br>
+                → Tolera fallo de 1 broker sin pérdida de datos y sin interrumpir escrituras.
+              </div>
+            </div>
+
+            <h3>Compactación de logs</h3>
+            <p>Además de la retención por tiempo/tamaño, Kafka tiene un modo especial: <strong>log compaction</strong>.
+              Retiene solo el <em>último valor</em> para cada key, eliminando versiones anteriores.</p>
+            <div class="arch-diagram">
+              <span class="dim">Antes de compactación:</span>
+              key:user-1 → valor:"Juan" offset:0
+              key:user-2 → valor:"Ana" offset:1
+              key:user-1 → valor:"Juan C" offset:2 <span class="dim">← nuevo valor para user-1</span>
+              key:user-3 → valor:"Pedro" offset:3
+              key:user-2 → valor:null offset:4 <span class="dim">← tombstone = eliminar user-2</span>
+
+              <span class="dim">Después de compactación:</span>
+              key:user-1 → valor:"Juan C" offset:2 <span class="hi">← solo el último</span>
+              key:user-3 → valor:"Pedro" offset:3 <span class="hi">← se mantiene</span>
+              <span class="dim">key:user-2 eliminado (tombstone)</span>
+            </div>
+
+            <div class="callout info">
+              <div class="callout-icon">💡</div>
+              <div class="callout-body"><strong>Log compaction es ideal para:</strong> tablas de estado (state tables),
+                cachés distribuidos, Event Sourcing donde solo necesitas el estado actual por entidad.</div>
+            </div>
+
+            <div class="quiz-card">
+              <div class="quiz-title">⚡ Pregunta Rápida</div>
+              <div class="quiz-question">Con <code>replication-factor=3</code> y <code>min.insync.replicas=2</code>, ¿cuántos brokers pueden fallar sin perder datos ni interrumpir escrituras?</div>
+              <div class="quiz-opts">
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) 0 brokers — cualquier fallo detiene el cluster</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) 1 broker — quedan 2 réplicas activas, suficiente para el mínimo de ISR</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) 2 brokers — el factor de replicación 3 permite 2 fallos simultáneos</div>
+              </div>
+              <div class="quiz-result" id="qr-6">✅ Correcto. Con RF=3 y min.ISR=2, necesitas mínimo 2 réplicas vivas para que el cluster acepte escrituras. Si cae 1 broker aún quedan 2 réplicas (cumple min.ISR). Si caen 2 brokers, solo queda 1 réplica — el cluster rechaza escrituras para evitar pérdida de datos.</div>
+            </div>
+          </div>
+          <div class="lesson-nav">
+            <button class="nav-btn prev" onclick="gotoLesson(5)">← Consumers</button>
+            <button class="done-btn" id="done-6" onclick="markDone(6)">✓ Marcar visto</button>
+            <button class="nav-btn next" onclick="gotoLesson(7)">Offsets y Retención →</button>
+          </div>
+        </div>
+
+        <!-- ═══ LESSON 7 ═══ -->
+        <div class="lesson" id="lesson-7">
+          <div class="lesson-header">
+            <div class="lesson-badge">07</div>
+            <div class="lesson-title-wrap">
+              <h2>Offsets y Retención</h2>
+              <div class="lesson-sub">Posicionamiento, replay y políticas de limpieza</div>
+            </div>
+          </div>
+          <div class="lesson-body">
+            <p>El <strong>offset</strong> es el identificador numérico secuencial de cada mensaje dentro de una partición. Controlar dónde comienza a leer un consumer — y cuánto tiempo Kafka conserva los mensajes — es clave para implementar replay de eventos, tolerancia a fallos y gestión eficiente del almacenamiento.</p>
+            <h3>Gestión manual de Offsets</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">bash <span class="code-filename">kafka-consumer-groups.sh</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Ver estado de un consumer group (lag, offsets)
+kafka-consumer-groups.sh \
+  --bootstrap-server localhost:9092 \
+  --group mi-servicio-consumer \
+  --describe
+
+# Salida:
+# GROUP          TOPIC            PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG   CONSUMER-ID
+# mi-servicio    pedidos.ordenes  0          145             150             5     host-1
+# mi-servicio    pedidos.ordenes  1          200             200             0     host-2
+# mi-servicio    pedidos.ordenes  2          98              110             12    host-1
+
+# Resetear offset — REPLAY de mensajes
+# El consumer group DEBE estar detenido
+
+# Desde el principio (todos los mensajes)
+kafka-consumer-groups.sh --reset-offsets \
+  --group mi-servicio-consumer \
+  --topic pedidos.ordenes.creadas \
+  --to-earliest --execute \
+  --bootstrap-server localhost:9092
+
+# Desde un punto en el tiempo
+kafka-consumer-groups.sh --reset-offsets \
+  --group mi-servicio-consumer \
+  --topic pedidos.ordenes.creadas \
+  --to-datetime 2025-01-15T00:00:00.000 --execute \
+  --bootstrap-server localhost:9092
+
+# Mover N mensajes atrás
+kafka-consumer-groups.sh --reset-offsets \
+  --group mi-servicio-consumer \
+  --topic pedidos.ordenes.creadas \
+  --shift-by -1000 --execute \
+  --bootstrap-server localhost:9092</code></pre>
+            </div>
+
+            <h3>Políticas de Retención</h3>
+            <div class="table-wrap">
+              <table>
+                <tr>
+                  <th>Configuración</th>
+                  <th>Default</th>
+                  <th>Descripción</th>
+                </tr>
+                <tr>
+                  <td><code>retention.ms</code></td>
+                  <td>7 días</td>
+                  <td>Tiempo que se retienen los mensajes. -1 = infinito.</td>
+                </tr>
+                <tr>
+                  <td><code>retention.bytes</code></td>
+                  <td>-1 (inf)</td>
+                  <td>Tamaño máximo del log por partición.</td>
+                </tr>
+                <tr>
+                  <td><code>cleanup.policy</code></td>
+                  <td>delete</td>
+                  <td><code>delete</code> elimina viejos, <code>compact</code> mantiene último por key,
+                    <code>compact,delete</code> ambos.</td>
+                </tr>
+                <tr>
+                  <td><code>segment.bytes</code></td>
+                  <td>1GB</td>
+                  <td>Tamaño de cada segmento de log (archivo físico).</td>
+                </tr>
+                <tr>
+                  <td><code>segment.ms</code></td>
+                  <td>7 días</td>
+                  <td>Kafka rota el segmento activo aunque no esté lleno.</td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">bash <span class="code-filename">topic retention config</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Configurar retención al crear
+kafka-topics.sh --create \
+  --topic auditoria.eventos \
+  --partitions 6 \
+  --replication-factor 3 \
+  --config retention.ms=604800000 \    # 7 días
+  --config cleanup.policy=compact \   # solo último valor por key
+  --bootstrap-server localhost:9092
+
+# Modificar retención en caliente
+kafka-configs.sh --alter \
+  --entity-type topics \
+  --entity-name auditoria.eventos \
+  --add-config retention.ms=2592000000 \  # 30 días
+  --bootstrap-server localhost:9092</code></pre>
+            </div>
+
+            <h3>Consumer Lag</h3>
+            <p>El <strong>consumer lag</strong> es la diferencia entre el último offset disponible y el último offset
+              procesado por el consumer. Es la métrica más crítica para monitorear la salud de un consumer.</p>
+            <div class="arch-diagram">
+              <span class="hi">Log-End-Offset (LEO)</span>: 1000 <span class="dim">← último mensaje en el broker</span>
+              <span class="hi2">Current Offset</span>: 985 <span class="dim">← último procesado por consumer</span>
+              ─────
+              <span class="hi">LAG</span>: 15 <span class="dim">← mensajes pendientes de procesar</span>
+
+              <span class="dim">Lag = 0 → consumer al día ✅</span>
+              <span class="dim">Lag creciente → consumer lento, escalar ⚠️</span>
+              <span class="dim">Lag > umbral → alertar 🚨</span>
+            </div>
+            <div class="quiz-card">
+              <div class="quiz-title">⚡ Pregunta Rápida</div>
+              <div class="quiz-question">¿Qué condición es <strong>obligatoria</strong> para resetear los offsets de un consumer group con <code>--reset-offsets --execute</code>?</div>
+              <div class="quiz-opts">
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) No hay ninguna condición, se puede hacer en cualquier momento con el grupo activo</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) El consumer group debe estar completamente detenido (sin consumers activos corriendo)</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) El topic debe estar en modo compactación para permitir el reset</div>
+              </div>
+              <div class="quiz-result" id="qr-7">✅ Correcto. Kafka no permite resetear offsets de un grupo con consumers activos. Si hay instancias corriendo, el reset falla o entra en conflicto con los commits en curso. Siempre detiene todos los consumers del grupo antes de ejecutar el reset.</div>
+            </div>
+          </div>
+          <div class="lesson-nav">
+            <button class="nav-btn prev" onclick="gotoLesson(6)">← Replicación</button>
+            <button class="done-btn" id="done-7" onclick="markDone(7)">✓ Marcar visto</button>
+            <button class="nav-btn next" onclick="gotoLesson(8)">Serialización →</button>
+          </div>
+        </div>
+
+        <!-- ═══ LESSON 8 ═══ -->
+        <div class="lesson" id="lesson-8">
+          <div class="lesson-header">
+            <div class="lesson-badge">08</div>
+            <div class="lesson-title-wrap">
+              <h2>Serialización y Schema Registry</h2>
+              <div class="lesson-sub">JSON, Avro, Protobuf y contratos de datos</div>
+            </div>
+          </div>
+          <div class="lesson-body">
+            <p>Kafka transporta <strong>bytes crudos</strong>. La serialización/deserialización es responsabilidad del
+              producer y consumer. Elegir el formato correcto impacta rendimiento, compatibilidad y evolución del
+              schema.</p>
+
+            <h3>Comparativa de formatos</h3>
+            <div class="table-wrap">
+              <table>
+                <tr>
+                  <th>Formato</th>
+                  <th>Tamaño</th>
+                  <th>Legibilidad</th>
+                  <th>Schema Evolution</th>
+                  <th>Recomendado para</th>
+                </tr>
+                <tr>
+                  <td><strong>JSON</strong></td>
+                  <td>Grande</td>
+                  <td>✅ Alta</td>
+                  <td>Manual</td>
+                  <td>Desarrollo, APIs REST, debug</td>
+                </tr>
+                <tr>
+                  <td><strong>Avro</strong></td>
+                  <td>Pequeño</td>
+                  <td>Binario</td>
+                  <td>✅ Excelente con SR</td>
+                  <td>✅ Producción — el estándar Kafka</td>
+                </tr>
+                <tr>
+                  <td><strong>Protobuf</strong></td>
+                  <td>Pequeño</td>
+                  <td>Binario</td>
+                  <td>✅ Excelente</td>
+                  <td>gRPC + Kafka, equipos políglotas</td>
+                </tr>
+                <tr>
+                  <td><strong>MessagePack</strong></td>
+                  <td>Pequeño</td>
+                  <td>Binario</td>
+                  <td>Manual</td>
+                  <td>Alternativa simple a JSON</td>
+                </tr>
+              </table>
+            </div>
+
+            <h3>Schema Registry</h3>
+            <p>Confluent Schema Registry es un servicio central que almacena y versiona schemas. Permite
+              <strong>evolución de schemas sin romper consumers existentes</strong>.</p>
+            <div class="arch-diagram">
+              <span class="arch-title">Flujo con Schema Registry</span>
+
+              <span class="hi">Producer</span>:
+              1. Crea mensaje con schema V1
+              2. Registra schema en <span class="hi2">Schema Registry</span> → recibe schema_id=5
+              3. Serializa: [magic_byte][schema_id=5][avro_bytes]
+              4. Publica a Kafka
+
+              <span class="hi3">Consumer</span>:
+              1. Lee bytes del topic
+              2. Extrae schema_id=5
+              3. Consulta <span class="hi2">Schema Registry</span> → obtiene schema V1
+              4. Deserializa usando ese schema
+
+              <span class="dim">Schema Registry cachea schemas localmente → solo 1 req HTTP por schema_id</span>
+            </div>
+
+            <h3>JSON serialización en Go</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">go <span class="code-filename">serialización JSON simple</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">package events
+
+import "encoding/json"
+
+// Definir el contrato del evento como struct
+type OrdenCreadaEvent struct {
+    EventID   string    `json:"event_id"`
+    EventType string    `json:"event_type"`  // "orden.creada"
+    Version   int       `json:"version"`
+    Timestamp time.Time `json:"timestamp"`
+    Payload   struct {
+        OrdenID    string  `json:"orden_id"`
+        UsuarioID  string  `json:"usuario_id"`
+        Total      float64 `json:"total"`
+        Moneda     string  `json:"moneda"`
+        Items      []Item  `json:"items"`
+    } `json:"payload"`
+}
+
+// Serializar para publicar
+func Serialize(event OrdenCreadaEvent) ([]byte, error) {
+    return json.Marshal(event)
+}
+
+// Deserializar al consumir
+func Deserialize(data []byte) (*OrdenCreadaEvent, error) {
+    var event OrdenCreadaEvent
+    if err := json.Unmarshal(data, &event); err != nil {
+        return nil, fmt.Errorf("deserializar evento: %w", err)
+    }
+    return &event, nil
+}
+
+// Envelope genérico para schema evolution
+type EventEnvelope struct {
+    EventID   string          `json:"event_id"`
+    EventType string          `json:"event_type"`
+    Version   int             `json:"version"`
+    Timestamp time.Time       `json:"timestamp"`
+    Payload   json.RawMessage `json:"payload"`  // raw para deserializar según tipo
+}
+
+func DispatchEvent(data []byte, handlers map[string]EventHandler) error {
+    var env EventEnvelope
+    if err := json.Unmarshal(data, &env); err != nil {
+        return err
+    }
+    handler, ok := handlers[env.EventType]
+    if !ok {
+        return fmt.Errorf("handler no encontrado para: %s", env.EventType)
+    }
+    return handler.Handle(env)
+}</code></pre>
+            </div>
+
+            <div class="quiz-card">
+              <div class="quiz-title">⚡ Pregunta Rápida</div>
+              <div class="quiz-question">¿Qué ventaja principal ofrece <strong>Avro + Schema Registry</strong> sobre JSON puro en un sistema Kafka de producción?</div>
+              <div class="quiz-opts">
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Avro es más legible que JSON, facilitando el debugging de mensajes en producción</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">B) Avro no requiere ninguna configuración adicional en los consumers</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">C) Schema Evolution controlada: el schema se versiona centralmente y los consumers existentes no se rompen al evolucionar el contrato</div>
+              </div>
+              <div class="quiz-result" id="qr-8">✅ Correcto. El Schema Registry almacena y versiona los schemas. Con reglas de compatibilidad (BACKWARD, FORWARD, FULL), puedes agregar campos opcionales sin romper consumers existentes. JSON no tiene este mecanismo de governance.</div>
+            </div>
+          </div>
+          <div class="lesson-nav">
+            <button class="nav-btn prev" onclick="gotoLesson(7)">← Offsets y Retención</button>
+            <button class="done-btn" id="done-8" onclick="markDone(8)">✓ Marcar visto</button>
+            <button class="nav-btn next" onclick="gotoLesson(9)">Kafka con Docker →</button>
+          </div>
+        </div>
+
+        <!-- ═══ LESSON 9 ═══ -->
+        <div class="lesson" id="lesson-9">
+          <div class="lesson-header">
+            <div class="lesson-badge">09</div>
+            <div class="lesson-title-wrap">
+              <h2>Kafka con Docker</h2>
+              <div class="lesson-sub">Setup local de desarrollo con docker-compose</div>
+            </div>
+          </div>
+          <div class="lesson-body">
+            <p>Para desarrollar y probar aplicaciones Kafka localmente, Docker Compose es la herramienta más práctica. Con unos pocos archivos de configuración puedes levantar un clúster completo — Kafka en modo KRaft, una interfaz web (Kafka UI) y un Schema Registry opcional — en cuestión de segundos, sin instalar nada en el sistema operativo.</p>
+            <h3>docker-compose.yml — Stack completo</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">yaml <span class="code-filename">docker-compose.yml</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-yaml">version: '3.9'
+
+services:
+  # ─── Kafka (KRaft mode — sin ZooKeeper) ───
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"        # para apps locales
+      - "9101:9101"        # JMX métricas
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: >-
+        CONTROLLER:PLAINTEXT,
+        PLAINTEXT:PLAINTEXT,
+        PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: >-
+        PLAINTEXT://kafka:29092,
+        PLAINTEXT_HOST://localhost:9092
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: >-
+        PLAINTEXT://kafka:29092,
+        CONTROLLER://kafka:29093,
+        PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_LOG_RETENTION_HOURS: 168
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # ─── Kafka UI (interfaz web) ───
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  # ─── Schema Registry (opcional) ───
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.6.0
+    container_name: schema-registry
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka:29092'
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+volumes:
+  kafka-data:</code></pre>
+            </div>
+
+            <h3>Iniciar y verificar el cluster</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">bash <span class="code-filename">comandos de gestión</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Iniciar todo el stack
+docker-compose up -d
+
+# Ver logs en tiempo real
+docker-compose logs -f kafka
+
+# Verificar brokers activos
+docker exec kafka kafka-broker-api-versions \
+  --bootstrap-server localhost:9092
+
+# Crear topic de prueba
+docker exec kafka kafka-topics.sh \
+  --create --topic test-topic \
+  --partitions 3 --replication-factor 1 \
+  --bootstrap-server localhost:9092
+
+# Producir mensajes de prueba (consola)
+docker exec -it kafka kafka-console-producer.sh \
+  --topic test-topic \
+  --bootstrap-server localhost:9092
+# > hola mundo
+# > otro mensaje
+# Ctrl+C para salir
+
+# Consumir desde el principio
+docker exec -it kafka kafka-console-consumer.sh \
+  --topic test-topic \
+  --from-beginning \
+  --bootstrap-server localhost:9092
+
+# Ver todos los topics
+docker exec kafka kafka-topics.sh \
+  --list --bootstrap-server localhost:9092
+
+# Kafka UI: http://localhost:8080 (en tu navegador)</code></pre>
+            </div>
+
+            <h3>Cluster de 3 brokers para desarrollo avanzado</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">yaml <span class="code-filename">docker-compose-cluster.yml</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-yaml">services:
+  kafka-1:
+    image: confluentinc/cp-kafka:7.6.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka-1:29092,CONTROLLER://kafka-1:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka-1:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    ports: ["9092:9092"]
+
+  kafka-2:
+    image: confluentinc/cp-kafka:7.6.0
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka-2:29092,CONTROLLER://kafka-2:29093,PLAINTEXT_HOST://0.0.0.0:9093'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka-2:29092,PLAINTEXT_HOST://localhost:9093'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    ports: ["9093:9093"]
+
+  kafka-3:
+    image: confluentinc/cp-kafka:7.6.0
+    environment:
+      KAFKA_NODE_ID: 3
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka-3:29092,CONTROLLER://kafka-3:29093,PLAINTEXT_HOST://0.0.0.0:9094'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka-3:29092,PLAINTEXT_HOST://localhost:9094'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    ports: ["9094:9094"]</code></pre>
+            </div>
+            <div class="quiz-card">
+              <div class="quiz-title">⚡ Pregunta Rápida</div>
+              <div class="quiz-question">¿Para qué sirve <code>KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'</code> en la configuración del docker-compose?</div>
+              <div class="quiz-opts">
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Deshabilita todos los topics internos del clúster, incluido <code>__consumer_offsets</code></div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) Obliga a crear los topics explícitamente con <code>kafka-topics.sh</code>; evita la creación automática por producers</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Impide que los consumers lean de topics existentes hasta que el administrador los apruebe</div>
+              </div>
+              <div class="quiz-result" id="qr-9">✅ Correcto. Con <code>auto.create.topics.enable=false</code>, si un producer intenta publicar en un topic inexistente, Kafka devuelve un error en lugar de crearlo automáticamente. Esto es una buena práctica: garantiza que los topics se creen con los parámetros correctos (particiones, replicación, retención).</div>
+            </div>
+          </div>
+          <div class="lesson-nav">
+            <button class="nav-btn prev" onclick="gotoLesson(8)">← Serialización</button>
+            <button class="done-btn" id="done-9" onclick="markDone(9)">✓ Marcar visto</button>
+            <button class="nav-btn next" onclick="gotoLesson(10)">Kafka con Go →</button>
+          </div>
+        </div>
+
+        <!-- ═══ LESSON 10 ═══ -->
+        <div class="lesson" id="lesson-10">
+          <div class="lesson-header">
+            <div class="lesson-badge">10</div>
+            <div class="lesson-title-wrap">
+              <h2>Kafka con Go</h2>
+              <div class="lesson-sub">Producer y Consumer completos usando franz-go y confluent-kafka-go</div>
+            </div>
+          </div>
+          <div class="lesson-body">
+            <p>Las dos librerías más populares para Kafka en Go son <strong>confluent-kafka-go</strong> (wrapper de
+              librdkafka, máximo rendimiento) y <strong>franz-go</strong> (puro Go, más idiomático). Usaremos franz-go
+              por su enfoque Go-nativo.</p>
+
+            <div class="callout info">
+              <div class="callout-icon">📦</div>
+              <div class="callout-body">
+                <strong>Opciones de librerías Go:</strong><br>
+                • <code>github.com/twmb/franz-go</code> — Puro Go, idiomático, excelente ✅<br>
+                • <code>github.com/confluentinc/confluent-kafka-go</code> — Wrapper de C (librdkafka), máximo
+                rendimiento<br>
+                • <code>github.com/segmentio/kafka-go</code> — Simple, buena API
+              </div>
+            </div>
+
+            <h3>Setup del módulo</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">bash</div><button class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash">go mod init github.com/elkin/kafka-microservice
+go get github.com/twmb/franz-go@latest
+go get github.com/twmb/franz-go/pkg/kgo@latest</code></pre>
+            </div>
+
+            <h3>Producer completo</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">go <span class="code-filename">internal/kafka/producer.go</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">package kafka
+
+import (
+    "context"
+    "encoding/json"
+    "fmt"
+    "log/slog"
+    "time"
+
+    "github.com/twmb/franz-go/pkg/kgo"
+)
+
+type Producer struct {
+    client *kgo.Client
+    logger *slog.Logger
+}
+
+type ProducerConfig struct {
+    Brokers          []string
+    Topic            string
+    MaxRetries       int
+    RequiredAcks     kgo.Acks
+    CompressionCodec kgo.CompressionCodec
+}
+
+func DefaultProducerConfig(brokers []string) ProducerConfig {
+    return ProducerConfig{
+        Brokers:          brokers,
+        MaxRetries:       10,
+        RequiredAcks:     kgo.AllISRAcks(),       // acks=all
+        CompressionCodec: kgo.SnappyCompression(), // snappy
+    }
+}
+
+func NewProducer(cfg ProducerConfig) (*Producer, error) {
+    opts := []kgo.Opt{
+        kgo.SeedBrokers(cfg.Brokers...),
+        kgo.RequiredAcks(cfg.RequiredAcks),
+        kgo.WithLogger(kgo.BasicLogger(nil, kgo.LogLevelInfo, nil)),
+
+        // Idempotencia (acks=all la activa automáticamente en franz-go)
+        kgo.ProducerBatchMaxBytes(1_000_000),   // 1MB por batch
+        kgo.BrokerMaxWriteBytes(100_000_000),
+
+        // Retries
+        kgo.RecordRetries(cfg.MaxRetries),
+        kgo.RetryBackoffFn(func(try int) time.Duration {
+            return time.Duration(try) * 100 * time.Millisecond
+        }),
+    }
+
+    client, err := kgo.NewClient(opts...)
+    if err != nil {
+        return nil, fmt.Errorf("crear producer kafka: %w", err)
+    }
+
+    // Verificar conectividad
+    if err = client.Ping(context.Background()); err != nil {
+        return nil, fmt.Errorf("kafka ping fallido: %w", err)
+    }
+
+    return &Producer{client: client, logger: slog.Default()}, nil
+}
+
+// Publicar un evento serializado como JSON
+func (p *Producer) Publish(ctx context.Context, topic, key string, payload any) error {
+    data, err := json.Marshal(payload)
+    if err != nil {
+        return fmt.Errorf("serializar payload: %w", err)
+    }
+
+    record := &kgo.Record{
+        Topic: topic,
+        Key:   []byte(key),
+        Value: data,
+        Headers: []kgo.RecordHeader{
+            {Key: "content-type", Value: []byte("application/json")},
+            {Key: "producer",     Value: []byte("pedidos-service")},
+        },
+    }
+
+    // ProduceSync — espera confirmación (usa ProduceAsync para fire-and-forget)
+    results := p.client.ProduceSync(ctx, record)
+    if err := results.FirstErr(); err != nil {
+        return fmt.Errorf("publicar a %s: %w", topic, err)
+    }
+
+    p.logger.InfoContext(ctx, "mensaje publicado",
+        "topic", topic,
+        "key", key,
+        "partition", results[0].Record.Partition,
+        "offset", results[0].Record.Offset,
+    )
+    return nil
+}
+
+// PublishBatch — publicar múltiples mensajes eficientemente
+func (p *Producer) PublishBatch(ctx context.Context, records []*kgo.Record) error {
+    results := p.client.ProduceSync(ctx, records...)
+    return results.FirstErr()
+}
+
+func (p *Producer) Close() {
+    p.client.Close()
+}</code></pre>
+            </div>
+
+            <h3>Consumer con goroutines</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">go <span class="code-filename">internal/kafka/consumer.go</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">package kafka
+
+import (
+    "context"
+    "encoding/json"
+    "fmt"
+    "log/slog"
+
+    "github.com/twmb/franz-go/pkg/kgo"
+)
+
+// MessageHandler procesa un mensaje — implementar en cada servicio
+type MessageHandler func(ctx context.Context, record *kgo.Record) error
+
+type Consumer struct {
+    client  *kgo.Client
+    handler MessageHandler
+    logger  *slog.Logger
+}
+
+type ConsumerConfig struct {
+    Brokers         []string
+    GroupID         string
+    Topics          []string
+    AutoOffsetReset string  // "earliest" | "latest"
+    MaxPollRecords  int
+}
+
+func NewConsumer(cfg ConsumerConfig, handler MessageHandler) (*Consumer, error) {
+    var offsetStart kgo.Offset
+    if cfg.AutoOffsetReset == "earliest" {
+        offsetStart = kgo.NewOffset().AtStart()
+    } else {
+        offsetStart = kgo.NewOffset().AtEnd()
+    }
+
+    opts := []kgo.Opt{
+        kgo.SeedBrokers(cfg.Brokers...),
+        kgo.ConsumerGroup(cfg.GroupID),
+        kgo.ConsumeTopics(cfg.Topics...),
+        kgo.ConsumeResetOffset(offsetStart),
+
+        // CooperativeSticky — rebalanceo incremental sin stop-the-world
+        kgo.Balancers(kgo.CooperativeStickyBalancer()),
+
+        // Auto commit cada 5s (o usa CommitMarkedOffsets para control manual)
+        kgo.AutoCommitMarks(),
+        kgo.BlockRebalanceOnPoll(),
+    }
+
+    client, err := kgo.NewClient(opts...)
+    if err != nil {
+        return nil, fmt.Errorf("crear consumer kafka: %w", err)
+    }
+
+    return &Consumer{
+        client:  client,
+        handler: handler,
+        logger:  slog.Default(),
+    }, nil
+}
+
+// Start inicia el loop de consumo — bloquea hasta que ctx se cancele
+func (c *Consumer) Start(ctx context.Context) error {
+    c.logger.Info("consumer iniciado", "topics", c.client.GetConsumeTopics())
+
+    for {
+        // Fetch bloquea hasta tener mensajes o que ctx se cancele
+        fetches := c.client.PollFetches(ctx)
+
+        if ctx.Err() != nil {
+            c.logger.Info("consumer detenido por contexto")
+            return nil
+        }
+
+        if errs := fetches.Errors(); len(errs) > 0 {
+            for _, e := range errs {
+                c.logger.Error("error en fetch", "err", e.Err,
+                    "topic", e.Topic, "partition", e.Partition)
+            }
+            continue
+        }
+
+        // Procesar mensajes del batch
+        fetches.EachRecord(func(record *kgo.Record) {
+            if err := c.processRecord(ctx, record); err != nil {
+                c.logger.Error("error procesando mensaje",
+                    "err", err,
+                    "topic", record.Topic,
+                    "partition", record.Partition,
+                    "offset", record.Offset,
+                )
+                // En producción: enviar a DLQ (Dead Letter Queue)
+                return
+            }
+            // Marcar como procesado para commit
+            c.client.MarkCommitRecords(record)
+        })
+    }
+}
+
+func (c *Consumer) processRecord(ctx context.Context, r *kgo.Record) error {
+    c.logger.DebugContext(ctx, "procesando mensaje",
+        "topic", r.Topic,
+        "partition", r.Partition,
+        "offset", r.Offset,
+        "key", string(r.Key),
+    )
+    return c.handler(ctx, r)
+}
+
+func (c *Consumer) Close() {
+    c.client.Close()
+}</code></pre>
+            </div>
+
+            <h3>Integración completa: main.go</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">go <span class="code-filename">cmd/api/main.go</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">package main
+
+import (
+    "context"
+    "encoding/json"
+    "log/slog"
+    "os"
+    "os/signal"
+    "syscall"
+
+    mykafka "github.com/elkin/kafka-microservice/internal/kafka"
+    "github.com/twmb/franz-go/pkg/kgo"
+)
+
+type OrdenCreadaEvent struct {
+    OrdenID   string  `json:"orden_id"`
+    UsuarioID string  `json:"usuario_id"`
+    Total     float64 `json:"total"`
+}
+
+func main() {
+    logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+    slog.SetDefault(logger)
+
+    brokers := []string{"localhost:9092"}
+    topic := "pedidos.ordenes.creadas"
+
+    // ─── Producer ───
+    producer, err := mykafka.NewProducer(mykafka.DefaultProducerConfig(brokers))
+    if err != nil {
+        slog.Error("crear producer", "err", err)
+        os.Exit(1)
+    }
+    defer producer.Close()
+
+    // Publicar evento de prueba
+    evento := OrdenCreadaEvent{
+        OrdenID:   "ord-001",
+        UsuarioID: "usr-elkin",
+        Total:     150_000,
+    }
+    if err := producer.Publish(context.Background(), topic, evento.OrdenID, evento); err != nil {
+        slog.Error("publicar evento", "err", err)
+    }
+
+    // ─── Consumer ───
+    handler := func(ctx context.Context, record *kgo.Record) error {
+        var event OrdenCreadaEvent
+        if err := json.Unmarshal(record.Value, &event); err != nil {
+            return fmt.Errorf("deserializar: %w", err)
+        }
+        slog.InfoContext(ctx, "orden procesada",
+            "orden_id", event.OrdenID,
+            "total", event.Total,
+        )
+        // Aquí va la lógica de negocio: actualizar inventario, notificar, etc.
+        return nil
+    }
+
+    consumer, err := mykafka.NewConsumer(mykafka.ConsumerConfig{
+        Brokers:         brokers,
+        GroupID:         "inventario-service",
+        Topics:          []string{topic},
+        AutoOffsetReset: "earliest",
+    }, handler)
+    if err != nil {
+        slog.Error("crear consumer", "err", err)
+        os.Exit(1)
+    }
+    defer consumer.Close()
+
+    // ─── Graceful shutdown ───
+    ctx, cancel := signal.NotifyContext(context.Background(),
+        syscall.SIGINT, syscall.SIGTERM)
+    defer cancel()
+
+    slog.Info("microservicio iniciado 🚀")
+    if err := consumer.Start(ctx); err != nil {
+        slog.Error("consumer error", "err", err)
+    }
+    slog.Info("microservicio detenido")
+}</code></pre>
+            </div>
+            <div class="quiz-card">
+              <div class="quiz-title">⚡ Pregunta Rápida</div>
+              <div class="quiz-question">En el código Go del consumer, ¿qué hace <code>c.client.MarkCommitRecords(record)</code> después de procesar un mensaje?</div>
+              <div class="quiz-opts">
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Elimina el mensaje del topic de Kafka inmediatamente</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) Marca el offset del mensaje para ser commiteado en el próximo ciclo de auto-commit</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Envía un ACK directo al broker bloqueando hasta la confirmación</div>
+              </div>
+              <div class="quiz-result" id="qr-10">✅ Correcto. <code>MarkCommitRecords</code> no hace un commit inmediato al broker. Marca el offset localmente para que franz-go lo incluya en el próximo ciclo de auto-commit (configurado con <code>kgo.AutoCommitMarks()</code>). Esto garantiza que solo se commiteen mensajes realmente procesados.</div>
+            </div>
+          </div>
+          <div class="lesson-nav">
+            <button class="nav-btn prev" onclick="gotoLesson(9)">← Docker</button>
+            <button class="done-btn" id="done-10" onclick="markDone(10)">✓ Marcar visto</button>
+            <button class="nav-btn next" onclick="gotoLesson(11)">Kafka Streams →</button>
+          </div>
+        </div>
+
+        <!-- ═══ LESSON 11 ═══ -->
+        <div class="lesson" id="lesson-11">
+          <div class="lesson-header">
+            <div class="lesson-badge">11</div>
+            <div class="lesson-title-wrap">
+              <h2>Kafka Streams</h2>
+              <div class="lesson-sub">Procesamiento stateful de streams en tiempo real</div>
+            </div>
+          </div>
+          <div class="lesson-body">
+            <p>Kafka Streams es una <strong>librería de procesamiento de streams</strong> (no un cluster separado).
+              Permite transformar, agregar y enriquecer streams de datos en tiempo real, con estado distribuido.</p>
+
+            <h3>Conceptos clave</h3>
+            <div class="concept-grid">
+              <div class="concept-card">
+                <div class="concept-card-icon">📨</div>
+                <h4>KStream</h4>
+                <p>Stream de registros infinito. Cada registro es independiente — insert semantics. Ej: log de clicks,
+                  transacciones.</p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">📋</div>
+                <h4>KTable</h4>
+                <p>Vista materializada de un stream. Solo el último valor por key — update semantics. Ej: estado de
+                  usuario.</p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">🗂️</div>
+                <h4>State Store</h4>
+                <p>Almacenamiento local (RocksDB) para operaciones stateful: aggregations, joins, windowing.</p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">🪟</div>
+                <h4>Windows</h4>
+                <p>Agrupar eventos por tiempo: Tumbling (fijo), Hopping (solapado), Session (por actividad).</p>
+              </div>
+            </div>
+
+            <h3>Topología de procesamiento</h3>
+            <div class="arch-diagram">
+              <span class="arch-title">Pipeline: detectar fraude en tiempo real</span>
+
+              <span class="hi">KStream: pagos.transacciones</span>
+              │
+              ├─ filter(monto > 0)
+              │
+              ├─ mapValues(enriquecer con datos de usuario)
+              │
+              ├─ groupByKey(usuario_id)
+              │
+              ├─ windowedBy(TumblingWindow(5 minutos))
+              │
+              ├─ aggregate(sumar montos)
+              │
+              ├─ filter(total_5min > 10_000_000) ← umbral sospechoso
+              │
+              └─▶ <span class="hi2">KStream: fraude.alertas</span> ──▶ <span class="hi3">Servicio de alertas</span>
+            </div>
+
+            <h3>Windowing</h3>
+            <div class="table-wrap">
+              <table>
+                <tr>
+                  <th>Window Type</th>
+                  <th>Descripción</th>
+                  <th>Caso de uso</th>
+                </tr>
+                <tr>
+                  <td><strong>Tumbling</strong></td>
+                  <td>Ventanas fijas sin solapamiento. Ej: cada 5 minutos.</td>
+                  <td>Reportes periódicos, métricas por intervalo</td>
+                </tr>
+                <tr>
+                  <td><strong>Hopping</strong></td>
+                  <td>Ventanas fijas con solapamiento. Ej: 5min cada 1min.</td>
+                  <td>Sliding averages, detección de anomalías</td>
+                </tr>
+                <tr>
+                  <td><strong>Session</strong></td>
+                  <td>Ventanas dinámicas basadas en inactividad de un key.</td>
+                  <td>Sesiones de usuario, análisis de comportamiento</td>
+                </tr>
+                <tr>
+                  <td><strong>Sliding</strong></td>
+                  <td>Se actualiza con cada evento. Siempre el mismo tamaño de tiempo.</td>
+                  <td>Alertas inmediatas, rate limiting</td>
+                </tr>
+              </table>
+            </div>
+
+            <h3>Alternativa en Go: Stream processing manual</h3>
+            <p>Kafka Streams es Java/Scala. En Go se usa procesamiento manual de streams o librerías como
+              <strong>Watermill</strong> o <strong>Benthos/Redpanda Connect</strong>:</p>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">go <span class="code-filename">stream processor en Go</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">// Patrón pipeline: leer → transformar → escribir
+// Topology: pagos.creados → enriquecimiento → pagos.enriquecidos
+
+type PipelineProcessor struct {
+    consumer *kafka.Consumer
+    producer *kafka.Producer
+    enrich   func(ctx context.Context, pago *Pago) (*PagoEnriquecido, error)
+}
+
+func (p *PipelineProcessor) Process(ctx context.Context, record *kgo.Record) error {
+    // 1. Deserializar
+    var pago Pago
+    if err := json.Unmarshal(record.Value, &pago); err != nil {
+        return err
+    }
+
+    // 2. Transformar / enriquecer
+    enriquecido, err := p.enrich(ctx, &pago)
+    if err != nil {
+        return fmt.Errorf("enriquecer pago: %w", err)
+    }
+
+    // 3. Publicar al topic de salida
+    return p.producer.Publish(
+        ctx,
+        "pagos.enriquecidos",
+        pago.PagoID,
+        enriquecido,
+    )
+}
+
+// Aggregation en memoria (para volúmenes moderados)
+type WindowAggregator struct {
+    mu      sync.RWMutex
+    windows map[string]*windowState  // key → estado
+    windowDuration time.Duration
+}
+
+func (w *WindowAggregator) Add(key string, monto float64) {
+    w.mu.Lock()
+    defer w.mu.Unlock()
+
+    now := time.Now()
+    state := w.windows[key]
+    if state == nil || now.Sub(state.StartTime) > w.windowDuration {
+        state = &windowState{StartTime: now}
+        w.windows[key] = state
+    }
+    state.Total += monto
+    state.Count++
+}
+
+func (w *WindowAggregator) GetTotal(key string) float64 {
+    w.mu.RLock()
+    defer w.mu.RUnlock()
+    if s := w.windows[key]; s != nil {
+        return s.Total
+    }
+    return 0
+}</code></pre>
+            </div>
+            <div class="quiz-card">
+              <div class="quiz-title">⚡ Pregunta Rápida</div>
+              <div class="quiz-question">¿Cuál es la diferencia fundamental entre un <strong>KStream</strong> y una <strong>KTable</strong> en Kafka Streams?</div>
+              <div class="quiz-opts">
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) KStream procesa en tiempo real y KTable procesa mensajes en batch cada ciertos intervalos</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) KStream es un flujo de eventos inmutables (insert semantics); KTable representa el último estado por key (update semantics, solo conserva el valor más reciente)</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Son equivalentes, solo cambia la sintaxis de la API para diferentes tipos de operaciones</div>
+              </div>
+              <div class="quiz-result" id="qr-11">✅ Correcto. Un KStream modela eventos discretos (cada registro es independiente). Una KTable modela un estado: si llega un nuevo registro con la misma key, actualiza el valor anterior. La KTable es como una vista materializada en tiempo real del último estado por entidad.</div>
+            </div>
+          </div>
+          <div class="lesson-nav">
+            <button class="nav-btn prev" onclick="gotoLesson(10)">← Kafka con Go</button>
+            <button class="done-btn" id="done-11" onclick="markDone(11)">✓ Marcar visto</button>
+            <button class="nav-btn next" onclick="gotoLesson(12)">Kafka Connect →</button>
+          </div>
+        </div>
+
+        <!-- ═══ LESSON 12 ═══ -->
+        <div class="lesson" id="lesson-12">
+          <div class="lesson-header">
+            <div class="lesson-badge">12</div>
+            <div class="lesson-title-wrap">
+              <h2>Kafka Connect</h2>
+              <div class="lesson-sub">Conectores para integrar sistemas externos sin código</div>
+            </div>
+          </div>
+          <div class="lesson-body">
+            <p>Kafka Connect es un framework para mover datos entre Kafka y sistemas externos (bases de datos, S3,
+              Elasticsearch, etc.) <strong>sin escribir código de producer/consumer</strong>. Se configura mediante
+              JSON.</p>
+
+            <h3>Arquitectura de Kafka Connect</h3>
+            <div class="arch-diagram">
+              <span class="arch-title">Source y Sink Connectors</span>
+
+              <span class="hi">[PostgreSQL]</span> ──CDC──▶ <span class="hi2">[Source Connector]</span> ──▶ <span
+                class="hi3">Kafka</span> ──▶ <span class="hi2">[Sink Connector]</span> ──▶ <span
+                class="hi">[Elasticsearch]</span>
+              <span class="hi">[MySQL]</span> ──CDC──▶ <span class="hi2">[Source Connector]</span> ──▶ <span
+                class="hi3">Kafka</span> ──▶ <span class="hi2">[Sink Connector]</span> ──▶ <span
+                class="hi">[MongoDB]</span>
+              <span class="hi">[S3]</span> ──▶ <span class="hi2">[Source Connector]</span> ──▶ <span
+                class="hi3">Kafka</span> ──▶ <span class="hi2">[Sink Connector]</span> ──▶ <span class="hi">[S3
+                Archive]</span>
+              <span class="hi">[REST API]</span> ──▶ <span class="hi2">[Source Connector]</span> ──▶ <span
+                class="hi3">Kafka</span>
+
+              <span class="dim">Source: lee de sistema externo → Kafka</span>
+              <span class="dim">Sink: lee de Kafka → escribe en sistema externo</span>
+            </div>
+
+            <h3>Debezium — CDC con PostgreSQL</h3>
+            <p><strong>Debezium</strong> es el conector más poderoso: captura cada INSERT/UPDATE/DELETE de la base de
+              datos como evento Kafka (<strong>Change Data Capture</strong>).</p>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">bash <span class="code-filename">Registrar conector Debezium via REST</span>
+                </div><button class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash">curl -X POST http://localhost:8083/connectors \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "postgres-pedidos-connector",
+    "config": {
+      "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+      "database.hostname": "postgres",
+      "database.port": "5432",
+      "database.user": "postgres",
+      "database.password": "secret",
+      "database.dbname": "pedidos_db",
+      "database.server.name": "pedidos",
+      "table.include.list": "public.ordenes,public.pagos",
+      "plugin.name": "pgoutput",
+      "topic.prefix": "cdc",
+      "transforms": "unwrap",
+      "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+      "transforms.unwrap.drop.tombstones": "false",
+      "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+      "value.converter": "org.apache.kafka.connect.json.JsonConverter"
+    }
+  }'
+
+# Resultado: topics creados automáticamente
+# cdc.public.ordenes  ← cada cambio en la tabla ordenes
+# cdc.public.pagos    ← cada cambio en la tabla pagos
+
+# Verificar estado del conector
+curl http://localhost:8083/connectors/postgres-pedidos-connector/status</code></pre>
+            </div>
+
+            <h3>Connectors más populares</h3>
+            <div class="table-wrap">
+              <table>
+                <tr>
+                  <th>Conector</th>
+                  <th>Tipo</th>
+                  <th>Caso de uso</th>
+                </tr>
+                <tr>
+                  <td><strong>Debezium PostgreSQL</strong></td>
+                  <td>Source (CDC)</td>
+                  <td>Capturar cambios de BD en tiempo real</td>
+                </tr>
+                <tr>
+                  <td><strong>Debezium MySQL</strong></td>
+                  <td>Source (CDC)</td>
+                  <td>CDC para MySQL/MariaDB</td>
+                </tr>
+                <tr>
+                  <td><strong>Elasticsearch Sink</strong></td>
+                  <td>Sink</td>
+                  <td>Indexar eventos para búsqueda</td>
+                </tr>
+                <tr>
+                  <td><strong>S3 Sink</strong></td>
+                  <td>Sink</td>
+                  <td>Archivar eventos en S3/GCS/Azure</td>
+                </tr>
+                <tr>
+                  <td><strong>JDBC Source/Sink</strong></td>
+                  <td>Ambos</td>
+                  <td>Polling a cualquier BD SQL</td>
+                </tr>
+                <tr>
+                  <td><strong>HTTP Sink</strong></td>
+                  <td>Sink</td>
+                  <td>Llamar a APIs REST con eventos</td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="callout tip">
+              <div class="callout-icon">🏆</div>
+              <div class="callout-body"><strong>Outbox Pattern:</strong> Usa Debezium + tabla <code>outbox</code> en tu
+                BD para garantizar exactly-once entre tu transacción de negocio y la publicación en Kafka. Transaccional
+                + Kafka sin two-phase commit.</div>
+            </div>
+            <div class="quiz-card">
+              <div class="quiz-title">⚡ Pregunta Rápida</div>
+              <div class="quiz-question">¿Qué tipo de conector es <strong>Debezium</strong> y qué patrón implementa?</div>
+              <div class="quiz-opts">
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Es un Sink Connector que lee eventos de Kafka y los escribe en una base de datos</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">B) Es una librería Java que debes incluir en tu microservicio para publicar cambios de BD</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">C) Es un Source Connector que implementa CDC — captura cada INSERT/UPDATE/DELETE de la BD como evento Kafka automáticamente</div>
+              </div>
+              <div class="quiz-result" id="qr-12">✅ Correcto. Debezium es un Source Connector de Kafka Connect. Lee el <em>transaction log</em> de la base de datos (WAL en PostgreSQL, binlog en MySQL) y convierte cada cambio en un evento Kafka. No requiere modificar el código de la aplicación.</div>
+            </div>
+          </div>
+          <div class="lesson-nav">
+            <button class="nav-btn prev" onclick="gotoLesson(11)">← Kafka Streams</button>
+            <button class="done-btn" id="done-12" onclick="markDone(12)">✓ Marcar visto</button>
+            <button class="nav-btn next" onclick="gotoLesson(13)">Patrones de Diseño →</button>
+          </div>
+        </div>
+
+        <!-- ═══ LESSON 13 ═══ -->
+        <div class="lesson" id="lesson-13">
+          <div class="lesson-header">
+            <div class="lesson-badge">13</div>
+            <div class="lesson-title-wrap">
+              <h2>Patrones de Diseño</h2>
+              <div class="lesson-sub">Event Sourcing, CQRS, Saga Pattern y Dead Letter Queue</div>
+            </div>
+          </div>
+          <div class="lesson-body">
+            <p>Los sistemas basados en Kafka adoptan patrones de arquitectura que van más allá de la mensajería simple. <strong>Event Sourcing</strong> usa Kafka como la única fuente de verdad del sistema. <strong>CQRS</strong> separa escrituras de lecturas para escalar independientemente. El <strong>Saga Pattern</strong> coordina transacciones distribuidas entre microservicios. La <strong>Dead Letter Queue</strong> captura mensajes fallidos para análisis y reprocesamiento.</p>
+            <h3>Event Sourcing</h3>
+            <p>En lugar de guardar el <em>estado actual</em> en BD, guardas <strong>la secuencia de eventos que llevaron
+                a ese estado</strong>. Kafka es el log de eventos. El estado se reconstruye reproduciendo los eventos.
+            </p>
+            <div class="arch-diagram">
+              <span class="dim">Base de datos tradicional:</span>
+              tabla ordenes: { id:1, estado:"entregada", total:50000 } <span class="dim">← estado actual</span>
+
+              <span class="dim">Event Sourcing con Kafka:</span>
+              Kafka topic "ordenes":
+              offset:0 { "evento":"orden-creada", "orden_id":1, "total":50000 }
+              offset:1 { "evento":"pago-recibido", "orden_id":1 }
+              offset:2 { "evento":"orden-enviada", "orden_id":1, "tracking":"ABC" }
+              offset:3 { "evento":"orden-entregada","orden_id":1 }
+
+              <span class="hi">Estado = reducir(todos los eventos de esa orden)</span>
+            </div>
+
+            <h3>CQRS (Command Query Responsibility Segregation)</h3>
+            <div class="arch-diagram">
+              <span class="arch-title">CQRS + Kafka</span>
+
+              <span class="hi">Command Side</span>:
+              REST POST /ordenes ──▶ validate ──▶ publish(orden-creada) ──▶ <span class="hi2">Kafka</span>
+
+              <span class="hi3">Query Side</span>:
+              <span class="hi2">Kafka</span> ──▶ consumer ──▶ materializar en <span class="hi4">PostgreSQL/Redis</span>
+              (vista optimizada para consultas)
+              REST GET /ordenes/:id ──▶ leer de <span class="hi4">PostgreSQL/Redis</span>
+
+              <span class="dim">Ventaja: escrituras y lecturas escalan independientemente</span>
+              <span class="dim">Las consultas no bloquean las escrituras</span>
+            </div>
+
+            <h3>Saga Pattern — Transacciones distribuidas</h3>
+            <p>El Saga Pattern coordina transacciones que abarcan múltiples microservicios usando <strong>eventos de
+                compensación</strong> en caso de fallo.</p>
+            <div class="arch-diagram">
+              <span class="arch-title">Choreography-based Saga: Flujo de Pedido</span>
+
+              <span class="hi">[Pedidos]</span> ──evt:orden-creada──▶ <span class="hi2">[Inventario]</span>
+              │
+              ┌─────────────────────────┤
+              ▼ ▼
+              <span class="hi3">OK: evt:inventario-reservado</span> <span class="kafka-red">FAIL:
+                evt:inventario-sin-stock</span>
+              │ │
+              ▼ ▼
+              <span class="hi2">[Pagos]</span> <span class="hi">[Pedidos]</span> cancelar-orden
+              │
+              <span class="hi3">OK: evt:pago-procesado</span>
+              │
+              ▼
+              <span class="hi2">[Envíos]</span> ──▶ <span class="hi3">evt:envio-programado</span>
+            </div>
+
+            <h3>Dead Letter Queue (DLQ)</h3>
+            <p>Cuando un consumer no puede procesar un mensaje (error de deserialización, lógica de negocio, servicio
+              externo caído), se envía al <strong>DLQ</strong> para análisis y reprocesamiento posterior.</p>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">go <span class="code-filename">dead letter queue</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">type DLQHandler struct {
+    mainHandler MessageHandler
+    dlqProducer *kafka.Producer
+    maxRetries  int
+}
+
+type FailedMessage struct {
+    OriginalTopic     string    `json:"original_topic"`
+    OriginalPartition int32     `json:"original_partition"`
+    OriginalOffset    int64     `json:"original_offset"`
+    OriginalKey       string    `json:"original_key"`
+    OriginalValue     string    `json:"original_value"`
+    ErrorMessage      string    `json:"error_message"`
+    RetryCount        int       `json:"retry_count"`
+    FailedAt          time.Time `json:"failed_at"`
+}
+
+func (d *DLQHandler) Handle(ctx context.Context, record *kgo.Record) error {
+    var lastErr error
+
+    for attempt := 0; attempt <= d.maxRetries; attempt++ {
+        if attempt > 0 {
+            time.Sleep(time.Duration(attempt) * 500 * time.Millisecond)
+        }
+
+        if err := d.mainHandler(ctx, record); err != nil {
+            lastErr = err
+            slog.WarnContext(ctx, "reintento",
+                "attempt", attempt, "err", err,
+                "topic", record.Topic, "offset", record.Offset)
+            continue
+        }
+        return nil // éxito
+    }
+
+    // Enviar al DLQ después de agotar reintentos
+    dlqMsg := FailedMessage{
+        OriginalTopic:     record.Topic,
+        OriginalPartition: record.Partition,
+        OriginalOffset:    record.Offset,
+        OriginalKey:       string(record.Key),
+        OriginalValue:     string(record.Value),
+        ErrorMessage:      lastErr.Error(),
+        RetryCount:        d.maxRetries,
+        FailedAt:          time.Now(),
+    }
+
+    dlqTopic := record.Topic + ".dlq"
+    if err := d.dlqProducer.Publish(ctx, dlqTopic, string(record.Key), dlqMsg); err != nil {
+        return fmt.Errorf("enviar a DLQ: %w", err)
+    }
+
+    slog.ErrorContext(ctx, "mensaje enviado a DLQ",
+        "dlq_topic", dlqTopic,
+        "original_error", lastErr)
+    return nil // retornar nil para no bloquear el consumer
+}</code></pre>
+            </div>
+            <div class="quiz-card">
+              <div class="quiz-title">⚡ Pregunta Rápida</div>
+              <div class="quiz-question">En el <strong>Saga Pattern</strong> tipo <em>Choreography</em>, ¿cómo se coordinan los microservicios ante un fallo?</div>
+              <div class="quiz-opts">
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Un orquestador central detecta el fallo y llama a los servicios de compensación en orden</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) El servicio que falla publica un evento de fallo; otros servicios reaccionan a ese evento publicando sus propios eventos de compensación</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Se usa una base de datos compartida y transacciones ACID distribuidas para revertir los cambios</div>
+              </div>
+              <div class="quiz-result" id="qr-13">✅ Correcto. En Choreography-Saga no hay orquestador. Cada servicio conoce solo su próximo paso. Ante un fallo, publica un evento de compensación (ej. <code>inventario-sin-stock</code>) y los servicios afectados reaccionan ejecutando su reversión.</div>
+            </div>
+          </div>
+          <div class="lesson-nav">
+            <button class="nav-btn prev" onclick="gotoLesson(12)">← Kafka Connect</button>
+            <button class="done-btn" id="done-13" onclick="markDone(13)">✓ Marcar visto</button>
+            <button class="nav-btn next" onclick="gotoLesson(14)">Seguridad →</button>
+          </div>
+        </div>
+
+        <!-- ═══ LESSON 14 ═══ -->
+        <div class="lesson" id="lesson-14">
+          <div class="lesson-header">
+            <div class="lesson-badge">14</div>
+            <div class="lesson-title-wrap">
+              <h2>Seguridad en Kafka</h2>
+              <div class="lesson-sub">TLS, SASL, ACLs y mejores prácticas</div>
+            </div>
+          </div>
+          <div class="lesson-body">
+            <p>Un clúster Kafka en producción expuesto sin seguridad es una vulnerabilidad crítica. Kafka implementa seguridad en tres capas complementarias: <strong>TLS</strong> cifra los datos en tránsito, <strong>SASL</strong> autentica la identidad de cada cliente, y las <strong>ACLs</strong> controlan qué operaciones puede ejecutar cada usuario en cada topic o consumer group.</p>
+            <h3>Capas de seguridad</h3>
+            <div class="concept-grid">
+              <div class="concept-card">
+                <div class="concept-card-icon">🔐</div>
+                <h4>Cifrado (TLS)</h4>
+                <p>Encripta datos en tránsito entre clients y brokers. Evita eavesdropping en la red.</p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">🪪</div>
+                <h4>Autenticación (SASL)</h4>
+                <p>Verifica la identidad del cliente. Opciones: PLAIN, SCRAM-SHA-512, GSSAPI (Kerberos), OAUTHBEARER.
+                </p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">🛡️</div>
+                <h4>Autorización (ACLs)</h4>
+                <p>Controla qué operaciones puede hacer cada cliente en cada topic/grupo.</p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">🔍</div>
+                <h4>Auditoría</h4>
+                <p>Registro de accesos y operaciones para compliance y detección de anomalías.</p>
+              </div>
+            </div>
+
+            <h3>Configurar TLS + SASL en el broker</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">properties <span class="code-filename">server.properties (broker)</span></div>
+                <button class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># ─── Listeners con seguridad ───
+listeners=SASL_SSL://0.0.0.0:9093,PLAINTEXT://0.0.0.0:9092
+advertised.listeners=SASL_SSL://kafka.miempresa.com:9093
+
+# ─── TLS (SSL) ───
+ssl.keystore.location=/opt/kafka/ssl/kafka.keystore.jks
+ssl.keystore.password=keystore-password
+ssl.key.password=key-password
+ssl.truststore.location=/opt/kafka/ssl/kafka.truststore.jks
+ssl.truststore.password=truststore-password
+ssl.client.auth=required          # requiere certificado de cliente
+
+# ─── SASL ───
+sasl.enabled.mechanisms=SCRAM-SHA-512
+sasl.mechanism.inter.broker.protocol=SCRAM-SHA-512
+security.inter.broker.protocol=SASL_SSL
+
+# ─── Autorización ───
+authorizer.class.name=kafka.security.authorizer.AclAuthorizer
+super.users=User:admin</code></pre>
+            </div>
+
+            <h3>ACLs — Control de acceso</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">bash <span class="code-filename">kafka-acls.sh</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Crear usuario
+kafka-configs.sh --alter --entity-type users \
+  --entity-name pedidos-service \
+  --add-config 'SCRAM-SHA-512=[iterations=8192,password=super-secret]' \
+  --bootstrap-server localhost:9092
+
+# Dar permiso de WRITE al topic de pedidos
+kafka-acls.sh --add \
+  --allow-principal User:pedidos-service \
+  --operation Write \
+  --topic pedidos.ordenes.creadas \
+  --bootstrap-server localhost:9092
+
+# Dar permiso de READ + GROUP al consumer
+kafka-acls.sh --add \
+  --allow-principal User:inventario-service \
+  --operation Read \
+  --topic pedidos.ordenes.creadas \
+  --bootstrap-server localhost:9092
+
+kafka-acls.sh --add \
+  --allow-principal User:inventario-service \
+  --operation Read \
+  --group inventario-consumer-group \
+  --bootstrap-server localhost:9092
+
+# Listar ACLs
+kafka-acls.sh --list --bootstrap-server localhost:9092</code></pre>
+            </div>
+
+            <h3>Configurar cliente Go con TLS + SASL</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">go <span class="code-filename">kafka seguro con franz-go</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">import (
+    "crypto/tls"
+    "github.com/twmb/franz-go/pkg/kgo"
+    "github.com/twmb/franz-go/pkg/sasl/scram"
+)
+
+func newSecureClient(cfg SecurityConfig) (*kgo.Client, error) {
+    // SASL SCRAM-SHA-512
+    auth := scram.Auth{
+        User: cfg.Username,
+        Pass: cfg.Password,
+    }
+    saslMechanism := auth.AsSha512Mechanism()
+
+    // TLS
+    tlsCfg := &tls.Config{
+        MinVersion: tls.VersionTLS12,
+        // En producción: cargar certificados
+        // Certificates: []tls.Certificate{cert},
+        // RootCAs: certPool,
+    }
+
+    return kgo.NewClient(
+        kgo.SeedBrokers(cfg.Brokers...),
+        kgo.SASL(saslMechanism),
+        kgo.DialTLSConfig(tlsCfg),
+    )
+}</code></pre>
+            </div>
+
+            <div class="callout danger">
+              <div class="callout-icon">🚨</div>
+              <div class="callout-body"><strong>Nunca en producción:</strong> No uses <code>PLAINTEXT</code> en
+                producción. Nunca pongas passwords directamente en código — usa variables de entorno o un secret manager
+                (HashiCorp Vault, AWS Secrets Manager, Azure Key Vault).</div>
+            </div>
+            <div class="quiz-card">
+              <div class="quiz-title">⚡ Pregunta Rápida</div>
+              <div class="quiz-question">¿Cuál es la combinación correcta de capas de seguridad para un cluster Kafka en producción?</div>
+              <div class="quiz-opts">
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Solo TLS es suficiente — cifra los datos y autentica implícitamente a los clientes</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">B) PLAINTEXT con firewall es aceptable en redes internas privadas</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">C) TLS (cifrado en tránsito) + SASL (autenticación de clientes) + ACLs (autorización por operación/topic)</div>
+              </div>
+              <div class="quiz-result" id="qr-14">✅ Correcto. Las tres capas son complementarias y ninguna reemplaza a las demás: TLS evita interceptación de mensajes en la red, SASL verifica la identidad del cliente (quién eres), y las ACLs controlan las operaciones permitidas (qué puedes hacer y en qué topics).</div>
+            </div>
+          </div>
+          <div class="lesson-nav">
+            <button class="nav-btn prev" onclick="gotoLesson(13)">← Patrones</button>
+            <button class="done-btn" id="done-14" onclick="markDone(14)">✓ Marcar visto</button>
+            <button class="nav-btn next" onclick="gotoLesson(15)">Monitoreo →</button>
+          </div>
+        </div>
+
+        <!-- ═══ LESSON 15 ═══ -->
+        <div class="lesson" id="lesson-15">
+          <div class="lesson-header">
+            <div class="lesson-badge">15</div>
+            <div class="lesson-title-wrap">
+              <h2>Monitoreo y Operaciones</h2>
+              <div class="lesson-sub">Métricas críticas, herramientas y alertas en producción</div>
+            </div>
+          </div>
+          <div class="lesson-body">
+            <h3>Métricas críticas a monitorear</h3>
+            <div class="table-wrap">
+              <table>
+                <tr>
+                  <th>Métrica</th>
+                  <th>Fuente</th>
+                  <th>Umbral de alerta</th>
+                </tr>
+                <tr>
+                  <td><strong>Consumer Lag</strong></td>
+                  <td>consumer_lag por topic/partition</td>
+                  <td>>1000 mensajes sostenido</td>
+                </tr>
+                <tr>
+                  <td><strong>Under-Replicated Partitions</strong></td>
+                  <td>kafka.server:ReplicaManager</td>
+                  <td>> 0 (siempre debe ser 0)</td>
+                </tr>
+                <tr>
+                  <td><strong>Active Controller Count</strong></td>
+                  <td>kafka.controller</td>
+                  <td>≠ 1 (debe ser exactamente 1)</td>
+                </tr>
+                <tr>
+                  <td><strong>Offline Partitions</strong></td>
+                  <td>kafka.controller</td>
+                  <td>> 0 → servicio degradado</td>
+                </tr>
+                <tr>
+                  <td><strong>Request Rate</strong></td>
+                  <td>kafka.network:RequestMetrics</td>
+                  <td>Para capacity planning</td>
+                </tr>
+                <tr>
+                  <td><strong>Disk Usage</strong></td>
+                  <td>OS metrics</td>
+                  <td>> 80% → expandir storage</td>
+                </tr>
+                <tr>
+                  <td><strong>Network I/O</strong></td>
+                  <td>OS metrics</td>
+                  <td>Saturación de red</td>
+                </tr>
+              </table>
+            </div>
+
+            <h3>Herramientas esenciales</h3>
+            <div class="concept-grid">
+              <div class="concept-card">
+                <div class="concept-card-icon">🖥️</div>
+                <h4>Kafka UI</h4>
+                <p>Interfaz web open-source. Ver topics, consumers, mensajes, lag. Docker-ready.</p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">📊</div>
+                <h4>Grafana + Prometheus</h4>
+                <p>Stack de monitoreo estándar. JMX Exporter expone métricas de Kafka para Prometheus.</p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">🔭</div>
+                <h4>Burrow</h4>
+                <p>Monitor de consumer lag by LinkedIn. Alertas inteligentes sobre grupos de consumers.</p>
+              </div>
+              <div class="concept-card">
+                <div class="concept-card-icon">🎛️</div>
+                <h4>Confluent Control Center</h4>
+                <p>UI completa (Enterprise). Stream Governance, Data Lineage, alertas.</p>
+              </div>
+            </div>
+
+            <h3>docker-compose con monitoreo</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">yaml <span class="code-filename">monitoring stack</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-yaml">  # JMX Exporter para exponer métricas de Kafka
+  jmx-exporter:
+    image: bitnami/jmx-exporter:latest
+    ports: ["5556:5556"]
+    volumes:
+      - ./config/kafka-jmx.yml:/etc/jmx-exporter/config.yml
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports: ["9090:9090"]
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana:latest
+    ports: ["3000:3000"]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      # Dashboard preconstruido para Kafka:
+      # https://grafana.com/grafana/dashboards/7589</code></pre>
+            </div>
+
+            <h3>Consumer Lag monitor en Go</h3>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-lang">go <span class="code-filename">lag monitor con franz-go</span></div><button
+                  class="copy-btn" onclick="copyCode(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">// Monitorear consumer lag programáticamente
+func monitorLag(ctx context.Context, client *kgo.Client,
+    group, topic string, alertThreshold int64) {
+
+    ticker := time.NewTicker(30 * time.Second)
+    defer ticker.Stop()
+
+    for {
+        select {
+        case <-ctx.Done():
+            return
+        case <-ticker.C:
+            // Obtener offsets del grupo
+            offsets, err := client.FetchOffsetsForTopicPartitions(ctx,
+                kgo.GroupOffsets(group),
+                map[string][]int32{topic: nil},
+            )
+            if err != nil {
+                slog.Error("fetch offsets", "err", err)
+                continue
+            }
+
+            // Calcular lag por partición
+            for partition, offset := range offsets[topic] {
+                lag := offset.At.Lag // franz-go calcula el lag
+                slog.Info("consumer lag",
+                    "group", group,
+                    "topic", topic,
+                    "partition", partition,
+                    "lag", lag,
+                )
+                if lag > alertThreshold {
+                    slog.Warn("⚠️  LAG ALTO — considerar escalar consumers",
+                        "partition", partition, "lag", lag,
+                        "threshold", alertThreshold)
+                }
+            }
+        }
+    }
+}</code></pre>
+            </div>
+
+            <div class="quiz-card">
+              <div class="quiz-title">🎉 ¡Curso Completado!</div>
+              <div class="quiz-question"
+                style="font-style:normal;color:var(--text-secondary);font-size:0.92rem;line-height:1.7;">
+                Has dominado Apache Kafka desde sus fundamentos hasta producción. Combinando este conocimiento con Go,
+                puedes construir sistemas de mensajería de alto rendimiento y microservicios orientados a eventos que
+                escalan a millones de mensajes por segundo.<br><br>
+                <strong>El siguiente paso:</strong> Construye un microservicio real que integre Go + Kafka + PostgreSQL
+                usando los patrones aprendidos.
+              </div>
+              <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:6px;">
+                <span class="tag">✅ Fundamentos</span>
+                <span class="tag">✅ Producers/Consumers</span>
+                <span class="tag">✅ Internals</span>
+                <span class="tag">✅ Docker</span>
+                <span class="tag green">✅ Kafka + Go</span>
+                <span class="tag green">✅ Patrones</span>
+                <span class="tag green">✅ Producción</span>
+              </div>
+            </div>
+          </div>
+          <div class="lesson-nav">
+            <button class="nav-btn prev" onclick="gotoLesson(14)">← Seguridad</button>
+            <button class="done-btn" id="done-15" onclick="markDone(15)">✅ Completar Curso</button>
+            <button class="nav-btn next" onclick="showHome()">🏠 Vista General</button>
+          </div>
+        </div>
+
+      </div><!-- /lessons-wrap -->
+    </main>
+  </div>
+
+  <script>
+    // ─── STATE ───
+    const TOTAL = 15;
+    let done = JSON.parse(localStorage.getItem('kafka-course-done') || '[]');
+    let current = 'home';
+
+    const modules = [
+      { id: 1, icon: '⚡', title: '¿Qué es Kafka?', desc: 'Historia, casos de uso y diferencias con colas tradicionales.' },
+      { id: 2, icon: '🏗️', title: 'Arquitectura Core', desc: 'Brokers, clusters, KRaft y el commit log distribuido.' },
+      { id: 3, icon: '🗂️', title: 'Topics y Particiones', desc: 'Diseño de topics, partitioning keys y orden de mensajes.' },
+      { id: 4, icon: '📤', title: 'Producers', desc: 'Garantías de entrega, acks, batching y configuraciones.' },
+      { id: 5, icon: '📥', title: 'Consumers y Grupos', desc: 'Consumer groups, offsets, rebalanceo y estrategias.' },
+      { id: 6, icon: '🔄', title: 'Replicación y Durabilidad', desc: 'ISR, factores de replicación y log compaction.' },
+      { id: 7, icon: '📍', title: 'Offsets y Retención', desc: 'Gestión de offsets, replay, consumer lag y políticas.' },
+      { id: 8, icon: '📦', title: 'Serialización y Schemas', desc: 'JSON, Avro, Protobuf y Schema Registry.' },
+      { id: 9, icon: '🐳', title: 'Kafka con Docker', desc: 'Setup local de desarrollo y cluster multi-broker.' },
+      { id: 10, icon: '🐹', title: 'Kafka con Go', desc: 'Producer y Consumer completos usando franz-go.' },
+      { id: 11, icon: '🌊', title: 'Kafka Streams', desc: 'Procesamiento stateful: KStream, KTable, Windows.' },
+      { id: 12, icon: '🔌', title: 'Kafka Connect', desc: 'Debezium CDC, conectores y flujos sin código.' },
+      { id: 13, icon: '🧩', title: 'Patrones de Diseño', desc: 'Event Sourcing, CQRS, Saga Pattern y DLQ.' },
+      { id: 14, icon: '🔐', title: 'Seguridad', desc: 'TLS, SASL/SCRAM, ACLs y mejores prácticas.' },
+      { id: 15, icon: '📊', title: 'Monitoreo y Operaciones', desc: 'Métricas críticas, Grafana, consumer lag y alertas.' },
+    ];
+
+    // ─── STREAM BACKGROUND ───
+    (function buildStreamLines() {
+      const bg = document.getElementById('stream-bg');
+      for (let i = 0; i < 12; i++) {
+        const line = document.createElement('div');
+        line.className = 'stream-line';
+        const left = (i / 12) * 100 + (Math.random() * 5);
+        const duration = 8 + Math.random() * 12;
+        const delay = Math.random() * -20;
+        line.style.cssText = `left:${left}%;animation-duration:${duration}s;animation-delay:${delay}s;height:${30 + Math.random() * 40}%;opacity:${0.3 + Math.random() * 0.7}`;
+        bg.appendChild(line);
+      }
+    })();
+
+    // ─── INIT ───
+    document.addEventListener('DOMContentLoaded', () => {
+      hljs.highlightAll();
+      buildModuleGrid();
+      syncProgress();
+      syncNavChecks();
+    });
+
+    function buildModuleGrid() {
+      const grid = document.getElementById('module-grid');
+      grid.innerHTML = modules.map(m => `
+    <div class="module-card" onclick="gotoLesson(${m.id})">
+      <div class="mc-top">
+        <div class="mc-icon">${m.icon}</div>
+        <div class="mc-meta">
+          <div class="mc-num">Módulo ${String(m.id).padStart(2, '0')}</div>
+          <div class="mc-title">${m.title}</div>
+        </div>
+      </div>
+      <div class="mc-desc">${m.desc}</div>
+      <div class="mc-status">
+        <div class="mc-dot ${done.includes(m.id) ? 'done' : ''}"></div>
+        ${done.includes(m.id) ? 'Completado' : 'Pendiente'}
+      </div>
+    </div>
+  `).join('');
+    }
+
+    function showHome() {
+      document.querySelectorAll('.lesson').forEach(l => l.classList.remove('active'));
+      document.getElementById('home-screen').style.display = '';
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelectorAll('.nav-item')[0].classList.add('active');
+      current = 'home';
+      closeMobileSidebar();
+      buildModuleGrid();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function gotoLesson(n) {
+      document.getElementById('home-screen').style.display = 'none';
+      document.querySelectorAll('.lesson').forEach(l => l.classList.remove('active'));
+      const target = document.getElementById('lesson-' + n);
+      if (!target) return;
+      target.classList.add('active');
+      document.querySelectorAll('.nav-item').forEach((el, i) => {
+        el.classList.remove('active');
+        if (i === n) el.classList.add('active');
+      });
+      current = n;
+      syncDoneBtn(n);
+      closeMobileSidebar();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      target.querySelectorAll('pre code:not(.hljs)').forEach(b => hljs.highlightElement(b));
+    }
+
+    function markDone(n) {
+      if (!done.includes(n)) {
+        done.push(n);
+        localStorage.setItem('kafka-course-done', JSON.stringify(done));
+      }
+      syncProgress();
+      syncNavChecks();
+      syncDoneBtn(n);
+    }
+
+    function syncDoneBtn(n) {
+      const btn = document.getElementById('done-' + n);
+      if (!btn) return;
+      if (done.includes(n)) {
+        btn.classList.add('done');
+        btn.textContent = '✅ Completado';
+      } else {
+        btn.classList.remove('done');
+        btn.textContent = '✓ Marcar visto';
+      }
+    }
+
+    function syncProgress() {
+      const pct = Math.round((done.length / TOTAL) * 100);
+      document.getElementById('prog-bar').style.width = pct + '%';
+      document.getElementById('prog-label').textContent = done.length + ' / ' + TOTAL;
+    }
+
+    function syncNavChecks() {
+      for (let i = 1; i <= TOTAL; i++) {
+        const el = document.getElementById('chk-' + i);
+        if (!el) continue;
+        const item = el.closest('.nav-item');
+        if (done.includes(i)) {
+          el.textContent = '✓';
+          item.classList.add('done');
+        } else {
+          el.textContent = '—';
+          item.classList.remove('done');
+        }
+      }
+    }
+
+    function copyCode(btn) {
+      const code = btn.closest('.code-block').querySelector('code');
+      navigator.clipboard.writeText(code.innerText).then(() => {
+        btn.textContent = '✓ copiado';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'copiar'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+
+    function checkQ(el, type) {
+      const card = el.closest('.quiz-card');
+      if (card.querySelector('.correct, .wrong')) return;
+      el.classList.add(type);
+      const resultEl = card.querySelector('.quiz-result');
+      if (!resultEl) return;
+      resultEl.classList.add('show', type === 'correct' ? 'ok' : 'fail');
+      if (type === 'wrong') {
+        const correctText = {
+          'qr-1':  '❌ No. En Kafka los mensajes NO se eliminan al leerlos. Permanecen según la política de retención configurada.',
+          'qr-2':  '❌ No. El Controller gestiona metadatos y liderazgo de particiones, no almacena mensajes ni serializa datos.',
+          'qr-3':  '❌ No. Kafka solo garantiza orden dentro de una partición. La misma key siempre va a la misma partición, pero no hay orden global entre particiones distintas.',
+          'qr-4':  '❌ No. acks=0 y acks=1 tienen riesgo de pérdida de datos. Solo acks=all con idempotencia garantiza durabilidad completa en producción.',
+          'qr-5':  '❌ No. Kafka no da error ni fracciona. Los 2 consumers extras simplemente quedan idle (standby).',
+          'qr-6':  '❌ No. Con RF=3 y min.ISR=2 solo toleras la caída de 1 broker. Si caen 2, solo queda 1 réplica y el cluster rechaza escrituras para evitar pérdida de datos.',
+          'qr-7':  '❌ No. Kafka rechaza el reset si hay consumers activos. Debes detener completamente el grupo antes de ejecutar --reset-offsets --execute.',
+          'qr-8':  '❌ No. Avro es formato binario (menos legible) y requiere Schema Registry. Su ventaja clave es la schema evolution controlada y gobernanza centralizada de contratos de datos.',
+          'qr-9':  '❌ No. Esta configuración solo desactiva la creación automática de topics por parte de producers. Los topics internos de Kafka siguen funcionando normalmente.',
+          'qr-10': '❌ No. MarkCommitRecords solo marca el offset localmente; no borra el mensaje ni bloquea esperando ACK del broker. El commit real ocurre en el siguiente ciclo de auto-commit.',
+          'qr-11': '❌ No. KStream y KTable tienen semánticas fundamentalmente distintas: insert vs update. No son intercambiables.',
+          'qr-12': '❌ No. Debezium es un Source Connector — lee de la BD y escribe en Kafka. Un Sink Connector haría lo contrario.',
+          'qr-13': '❌ No. En Choreography-Saga no hay orquestador central. Cada servicio reacciona a eventos de forma autónoma, publicando sus propios eventos de compensación si falla.',
+          'qr-14': '❌ No. TLS solo cifra el tráfico pero no autentica usuarios ni controla permisos. PLAINTEXT nunca debe usarse en producción. Las tres capas (TLS + SASL + ACLs) son necesarias.',
+        };
+        const id = resultEl.id;
+        if (correctText[id]) resultEl.textContent = correctText[id];
+      }
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('overlay').classList.toggle('show');
+    }
+
+    function closeMobileSidebar() {
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('show');
+      }
+    }
+  </script>
+</body>
+
+</html>
