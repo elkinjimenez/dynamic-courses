@@ -185,6 +185,44 @@
       white-space: nowrap;
     }
 
+    .quiz-counter {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      white-space: nowrap;
+    }
+
+    .quiz-counter-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      border: 1px solid;
+      font-size: 0.7rem;
+      transition: all 0.3s ease;
+    }
+
+    .quiz-counter-item.ok {
+      color: var(--green);
+      border-color: rgba(82, 214, 138, 0.35);
+      background: rgba(82, 214, 138, 0.08);
+    }
+
+    .quiz-counter-item.fail {
+      color: var(--kafka-red);
+      border-color: rgba(255, 77, 77, 0.35);
+      background: rgba(255, 77, 77, 0.08);
+    }
+
+    @media (max-width: 520px) {
+      .quiz-counter {
+        display: none;
+      }
+    }
+
     #menu-toggle {
       display: none;
       background: none;
@@ -1323,6 +1361,10 @@
       Kafka Mastery
     </div>
     <div class="header-right">
+      <div class="quiz-counter">
+        <span class="quiz-counter-item ok" id="quiz-ok">✓ 0</span>
+        <span class="quiz-counter-item fail" id="quiz-fail">✗ 0</span>
+      </div>
       <div class="progress-wrap">
         <div class="progress-bar-outer">
           <div class="progress-bar-inner" id="prog-bar"></div>
@@ -3955,6 +3997,7 @@ func monitorLag(ctx context.Context, client *kgo.Client,
     // ─── STATE ───
     const TOTAL = 15;
     let done = JSON.parse(localStorage.getItem('kafka-course-done') || '[]');
+    let quizDone = JSON.parse(localStorage.getItem('kafka-course-quiz') || '{}');
     let current = 'home';
 
     const modules = [
@@ -3995,6 +4038,7 @@ func monitorLag(ctx context.Context, client *kgo.Client,
       buildModuleGrid();
       syncProgress();
       syncNavChecks();
+      restoreQuizStates();
     });
 
     function buildModuleGrid() {
@@ -4100,7 +4144,19 @@ func monitorLag(ctx context.Context, client *kgo.Client,
     function checkQ(el, type) {
       const card = el.closest('.quiz-card');
       if (card.querySelector('.correct, .wrong')) return;
-      el.classList.add(type);
+      const opts = Array.from(card.querySelectorAll('.quiz-opt'));
+      const optIndex = opts.indexOf(el);
+      const resultEl = card.querySelector('.quiz-result');
+      if (!resultEl) return;
+      applyQuizResult(card, type, optIndex);
+      quizDone[resultEl.id] = { type, optIndex };
+      localStorage.setItem('kafka-course-quiz', JSON.stringify(quizDone));
+      updateQuizCounter();
+    }
+
+    function applyQuizResult(card, type, optIndex) {
+      const opts = Array.from(card.querySelectorAll('.quiz-opt'));
+      if (optIndex >= 0 && optIndex < opts.length) opts[optIndex].classList.add(type);
       const resultEl = card.querySelector('.quiz-result');
       if (!resultEl) return;
       resultEl.classList.add('show', type === 'correct' ? 'ok' : 'fail');
@@ -4124,6 +4180,24 @@ func monitorLag(ctx context.Context, client *kgo.Client,
         const id = resultEl.id;
         if (correctText[id]) resultEl.textContent = correctText[id];
       }
+    }
+
+    function updateQuizCounter() {
+      const values = Object.values(quizDone);
+      const ok = values.filter(v => v.type === 'correct').length;
+      const fail = values.filter(v => v.type === 'wrong').length;
+      document.getElementById('quiz-ok').textContent = '✓ ' + ok;
+      document.getElementById('quiz-fail').textContent = '✗ ' + fail;
+    }
+
+    function restoreQuizStates() {
+      document.querySelectorAll('.quiz-card').forEach(card => {
+        const resultEl = card.querySelector('.quiz-result');
+        if (!resultEl) return;
+        const state = quizDone[resultEl.id];
+        if (state) applyQuizResult(card, state.type, state.optIndex);
+      });
+      updateQuizCounter();
     }
 
     function toggleSidebar() {
