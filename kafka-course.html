@@ -1600,7 +1600,11 @@
             </div>
           </div>
           <div class="lesson-body">
-            <p>La arquitectura de Kafka se basa en un <strong>clúster de brokers distribuidos</strong> que almacenan y sirven streams de mensajes. Cada componente tiene un rol bien definido: los <strong>brokers</strong> persisten los datos, el <strong>Controller</strong> gestiona el estado del clúster, y los <strong>clients</strong> (producers y consumers) escriben y leen mensajes. Entender cómo interactúan estos piezas es esencial para diseñar sistemas robustos.</p>
+            <p>La arquitectura de Kafka se basa en un <strong>clúster de brokers distribuidos</strong> que almacenan y
+              sirven streams de mensajes. Cada componente tiene un rol bien definido: los <strong>brokers</strong>
+              persisten los datos, el <strong>Controller</strong> gestiona el estado del clúster, y los
+              <strong>clients</strong> (producers y consumers) escriben y leen mensajes. Entender cómo interactúan estos
+              piezas es esencial para diseñar sistemas robustos.</p>
             <h3>Componentes principales</h3>
             <div class="concept-grid">
               <div class="concept-card">
@@ -1712,11 +1716,16 @@
               <div class="quiz-title">⚡ Pregunta Rápida</div>
               <div class="quiz-question">¿Cuál es la función del Kafka <strong>Controller</strong> en modo KRaft?</div>
               <div class="quiz-opts">
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Almacenar todos los mensajes del clúster en memoria para acceso rápido</div>
-                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) Gestionar el estado del clúster: elecciones de líder de partición y metadatos de réplicas</div>
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Serializar y deserializar mensajes entre producers y consumers</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Almacenar todos los mensajes del clúster en
+                  memoria para acceso rápido</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) Gestionar el estado del clúster: elecciones de
+                  líder de partición y metadatos de réplicas</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Serializar y deserializar mensajes entre
+                  producers y consumers</div>
               </div>
-              <div class="quiz-result" id="qr-2">✅ Correcto. En modo KRaft, el Controller es un broker especial elegido entre los nodos. Gestiona las elecciones de líder de partición y mantiene el estado del clúster internamente, sin necesidad de ZooKeeper.</div>
+              <div class="quiz-result" id="qr-2">✅ Correcto. En modo KRaft, el Controller es un broker especial elegido
+                entre los nodos. Gestiona las elecciones de líder de partición y mantiene el estado del clúster
+                internamente, sin necesidad de ZooKeeper.</div>
             </div>
           </div>
           <div class="lesson-nav">
@@ -1830,7 +1839,8 @@ Producer key:"order-456" → P0: msg1(order-456), msg2(order-456)
               <div class="callout-icon">⚠️</div>
               <div class="callout-body"><strong>Hot partition:</strong> Si todas tus claves apuntan a la misma partición
                 (ej: clave es un enum con pocos valores), tendrás un desbalance. Diseña keys con alta cardinalidad:
-                <code>user_id</code>, <code>order_id</code>, <code>session_id</code>.</div>
+                <code>user_id</code>, <code>order_id</code>, <code>session_id</code>.
+              </div>
             </div>
 
             <h3>Gestión de Topics — CLI</h3>
@@ -1868,13 +1878,20 @@ kafka-topics.sh --delete \
 
             <div class="quiz-card">
               <div class="quiz-title">⚡ Pregunta Rápida</div>
-              <div class="quiz-question">Si un producer envía mensajes con <code>key="order-123"</code>, ¿qué garantiza Kafka sobre esos mensajes?</div>
+              <div class="quiz-question">Si un producer envía mensajes con <code>key="order-123"</code>, ¿qué garantiza
+                Kafka sobre esos mensajes?</div>
               <div class="quiz-opts">
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Los mensajes se distribuyen uniformemente entre todas las particiones del topic</div>
-                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) Todos los mensajes con la misma key siempre van a la misma partición, garantizando orden entre ellos</div>
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Kafka garantiza orden global en todas las particiones del topic sin importar la key</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Los mensajes se distribuyen uniformemente entre
+                  todas las particiones del topic</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) Todos los mensajes con la misma key siempre
+                  van a la misma partición, garantizando orden entre ellos</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Kafka garantiza orden global en todas las
+                  particiones del topic sin importar la key</div>
               </div>
-              <div class="quiz-result" id="qr-3">✅ Correcto. La fórmula <code>partición = hash(key) % num_particiones</code> asegura que la misma key siempre aterrice en la misma partición. El orden se garantiza <em>dentro de una partición</em>, no a nivel del topic completo.</div>
+              <div class="quiz-result" id="qr-3">✅ Correcto. La fórmula
+                <code>partición = hash(key) % num_particiones</code> asegura que la misma key siempre aterrice en la
+                misma partición. El orden se garantiza <em>dentro de una partición</em>, no a nivel del topic completo.
+              </div>
             </div>
           </div>
           <div class="lesson-nav">
@@ -2004,7 +2021,8 @@ kafka-topics.sh --delete \
               <div class="callout-icon">🚀</div>
               <div class="callout-body"><strong>Kafka agrupa mensajes en batches</strong> antes de enviarlos, aumentando
                 dramáticamente el throughput. Los parámetros clave son <code>batch.size</code> (bytes por batch) y
-                <code>linger.ms</code> (tiempo máximo de espera para llenar el batch).</div>
+                <code>linger.ms</code> (tiempo máximo de espera para llenar el batch).
+              </div>
             </div>
 
             <div class="code-block">
@@ -2052,13 +2070,19 @@ value.serializer=org.apache.kafka.common.serialization.ByteArraySerializer</code
 
             <div class="quiz-card">
               <div class="quiz-title">⚡ Pregunta Rápida</div>
-              <div class="quiz-question">¿Qué configuración de <code>acks</code> es la recomendada en producción para garantizar durabilidad sin perder mensajes?</div>
+              <div class="quiz-question">¿Qué configuración de <code>acks</code> es la recomendada en producción para
+                garantizar durabilidad sin perder mensajes?</div>
               <div class="quiz-opts">
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) <code>acks=0</code> — fire and forget, máximo rendimiento</div>
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">B) <code>acks=1</code> — solo el broker líder confirma la escritura</div>
-                <div class="quiz-opt" onclick="checkQ(this,'correct')">C) <code>acks=all</code> con <code>enable.idempotence=true</code> — confirmación de todas las réplicas sincronizadas (ISR)</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) <code>acks=0</code> — fire and forget, máximo
+                  rendimiento</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">B) <code>acks=1</code> — solo el broker líder
+                  confirma la escritura</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">C) <code>acks=all</code> con
+                  <code>enable.idempotence=true</code> — confirmación de todas las réplicas sincronizadas (ISR)</div>
               </div>
-              <div class="quiz-result" id="qr-4">✅ Correcto. <code>acks=all</code> espera confirmación de todas las réplicas en el ISR. Combinado con <code>enable.idempotence=true</code>, evita tanto la pérdida de mensajes como los duplicados por reintentos.</div>
+              <div class="quiz-result" id="qr-4">✅ Correcto. <code>acks=all</code> espera confirmación de todas las
+                réplicas en el ISR. Combinado con <code>enable.idempotence=true</code>, evita tanto la pérdida de
+                mensajes como los duplicados por reintentos.</div>
             </div>
           </div>
           <div class="lesson-nav">
@@ -2080,7 +2104,8 @@ value.serializer=org.apache.kafka.common.serialization.ByteArraySerializer</code
           <div class="lesson-body">
             <p>Los consumers leen mensajes de Kafka de forma <strong>activa (pull model)</strong>. La abstracción de
               <strong>Consumer Group</strong> permite escalar el consumo horizontalmente y garantizar que cada mensaje
-              sea procesado por exactamente un consumer dentro del grupo.</p>
+              sea procesado por exactamente un consumer dentro del grupo.
+            </p>
 
             <h3>Consumer Groups</h3>
             <div class="arch-diagram">
@@ -2293,13 +2318,19 @@ unclean.leader.election.enable=false  # evitar pérdida de datos
 
             <div class="quiz-card">
               <div class="quiz-title">⚡ Pregunta Rápida</div>
-              <div class="quiz-question">Con <code>replication-factor=3</code> y <code>min.insync.replicas=2</code>, ¿cuántos brokers pueden fallar sin perder datos ni interrumpir escrituras?</div>
+              <div class="quiz-question">Con <code>replication-factor=3</code> y <code>min.insync.replicas=2</code>,
+                ¿cuántos brokers pueden fallar sin perder datos ni interrumpir escrituras?</div>
               <div class="quiz-opts">
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) 0 brokers — cualquier fallo detiene el cluster</div>
-                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) 1 broker — quedan 2 réplicas activas, suficiente para el mínimo de ISR</div>
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) 2 brokers — el factor de replicación 3 permite 2 fallos simultáneos</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) 0 brokers — cualquier fallo detiene el cluster
+                </div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) 1 broker — quedan 2 réplicas activas,
+                  suficiente para el mínimo de ISR</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) 2 brokers — el factor de replicación 3 permite 2
+                  fallos simultáneos</div>
               </div>
-              <div class="quiz-result" id="qr-6">✅ Correcto. Con RF=3 y min.ISR=2, necesitas mínimo 2 réplicas vivas para que el cluster acepte escrituras. Si cae 1 broker aún quedan 2 réplicas (cumple min.ISR). Si caen 2 brokers, solo queda 1 réplica — el cluster rechaza escrituras para evitar pérdida de datos.</div>
+              <div class="quiz-result" id="qr-6">✅ Correcto. Con RF=3 y min.ISR=2, necesitas mínimo 2 réplicas vivas
+                para que el cluster acepte escrituras. Si cae 1 broker aún quedan 2 réplicas (cumple min.ISR). Si caen 2
+                brokers, solo queda 1 réplica — el cluster rechaza escrituras para evitar pérdida de datos.</div>
             </div>
           </div>
           <div class="lesson-nav">
@@ -2319,7 +2350,9 @@ unclean.leader.election.enable=false  # evitar pérdida de datos
             </div>
           </div>
           <div class="lesson-body">
-            <p>El <strong>offset</strong> es el identificador numérico secuencial de cada mensaje dentro de una partición. Controlar dónde comienza a leer un consumer — y cuánto tiempo Kafka conserva los mensajes — es clave para implementar replay de eventos, tolerancia a fallos y gestión eficiente del almacenamiento.</p>
+            <p>El <strong>offset</strong> es el identificador numérico secuencial de cada mensaje dentro de una
+              partición. Controlar dónde comienza a leer un consumer — y cuánto tiempo Kafka conserva los mensajes — es
+              clave para implementar replay de eventos, tolerancia a fallos y gestión eficiente del almacenamiento.</p>
             <h3>Gestión manual de Offsets</h3>
             <div class="code-block">
               <div class="code-header">
@@ -2385,7 +2418,8 @@ kafka-consumer-groups.sh --reset-offsets \
                   <td><code>cleanup.policy</code></td>
                   <td>delete</td>
                   <td><code>delete</code> elimina viejos, <code>compact</code> mantiene último por key,
-                    <code>compact,delete</code> ambos.</td>
+                    <code>compact,delete</code> ambos.
+                  </td>
                 </tr>
                 <tr>
                   <td><code>segment.bytes</code></td>
@@ -2437,13 +2471,19 @@ kafka-configs.sh --alter \
             </div>
             <div class="quiz-card">
               <div class="quiz-title">⚡ Pregunta Rápida</div>
-              <div class="quiz-question">¿Qué condición es <strong>obligatoria</strong> para resetear los offsets de un consumer group con <code>--reset-offsets --execute</code>?</div>
+              <div class="quiz-question">¿Qué condición es <strong>obligatoria</strong> para resetear los offsets de un
+                consumer group con <code>--reset-offsets --execute</code>?</div>
               <div class="quiz-opts">
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) No hay ninguna condición, se puede hacer en cualquier momento con el grupo activo</div>
-                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) El consumer group debe estar completamente detenido (sin consumers activos corriendo)</div>
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) El topic debe estar en modo compactación para permitir el reset</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) No hay ninguna condición, se puede hacer en
+                  cualquier momento con el grupo activo</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) El consumer group debe estar completamente
+                  detenido (sin consumers activos corriendo)</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) El topic debe estar en modo compactación para
+                  permitir el reset</div>
               </div>
-              <div class="quiz-result" id="qr-7">✅ Correcto. Kafka no permite resetear offsets de un grupo con consumers activos. Si hay instancias corriendo, el reset falla o entra en conflicto con los commits en curso. Siempre detiene todos los consumers del grupo antes de ejecutar el reset.</div>
+              <div class="quiz-result" id="qr-7">✅ Correcto. Kafka no permite resetear offsets de un grupo con consumers
+                activos. Si hay instancias corriendo, el reset falla o entra en conflicto con los commits en curso.
+                Siempre detiene todos los consumers del grupo antes de ejecutar el reset.</div>
             </div>
           </div>
           <div class="lesson-nav">
@@ -2510,7 +2550,8 @@ kafka-configs.sh --alter \
 
             <h3>Schema Registry</h3>
             <p>Confluent Schema Registry es un servicio central que almacena y versiona schemas. Permite
-              <strong>evolución de schemas sin romper consumers existentes</strong>.</p>
+              <strong>evolución de schemas sin romper consumers existentes</strong>.
+            </p>
             <div class="arch-diagram">
               <span class="arch-title">Flujo con Schema Registry</span>
 
@@ -2592,13 +2633,19 @@ func DispatchEvent(data []byte, handlers map[string]EventHandler) error {
 
             <div class="quiz-card">
               <div class="quiz-title">⚡ Pregunta Rápida</div>
-              <div class="quiz-question">¿Qué ventaja principal ofrece <strong>Avro + Schema Registry</strong> sobre JSON puro en un sistema Kafka de producción?</div>
+              <div class="quiz-question">¿Qué ventaja principal ofrece <strong>Avro + Schema Registry</strong> sobre
+                JSON puro en un sistema Kafka de producción?</div>
               <div class="quiz-opts">
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Avro es más legible que JSON, facilitando el debugging de mensajes en producción</div>
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">B) Avro no requiere ninguna configuración adicional en los consumers</div>
-                <div class="quiz-opt" onclick="checkQ(this,'correct')">C) Schema Evolution controlada: el schema se versiona centralmente y los consumers existentes no se rompen al evolucionar el contrato</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Avro es más legible que JSON, facilitando el
+                  debugging de mensajes en producción</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">B) Avro no requiere ninguna configuración adicional
+                  en los consumers</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">C) Schema Evolution controlada: el schema se
+                  versiona centralmente y los consumers existentes no se rompen al evolucionar el contrato</div>
               </div>
-              <div class="quiz-result" id="qr-8">✅ Correcto. El Schema Registry almacena y versiona los schemas. Con reglas de compatibilidad (BACKWARD, FORWARD, FULL), puedes agregar campos opcionales sin romper consumers existentes. JSON no tiene este mecanismo de governance.</div>
+              <div class="quiz-result" id="qr-8">✅ Correcto. El Schema Registry almacena y versiona los schemas. Con
+                reglas de compatibilidad (BACKWARD, FORWARD, FULL), puedes agregar campos opcionales sin romper
+                consumers existentes. JSON no tiene este mecanismo de governance.</div>
             </div>
           </div>
           <div class="lesson-nav">
@@ -2618,7 +2665,10 @@ func DispatchEvent(data []byte, handlers map[string]EventHandler) error {
             </div>
           </div>
           <div class="lesson-body">
-            <p>Para desarrollar y probar aplicaciones Kafka localmente, Docker Compose es la herramienta más práctica. Con unos pocos archivos de configuración puedes levantar un clúster completo — Kafka en modo KRaft, una interfaz web (Kafka UI) y un Schema Registry opcional — en cuestión de segundos, sin instalar nada en el sistema operativo.</p>
+            <p>Para desarrollar y probar aplicaciones Kafka localmente, Docker Compose es la herramienta más práctica.
+              Con unos pocos archivos de configuración puedes levantar un clúster completo — Kafka en modo KRaft, una
+              interfaz web (Kafka UI) y un Schema Registry opcional — en cuestión de segundos, sin instalar nada en el
+              sistema operativo.</p>
             <h3>docker-compose.yml — Stack completo</h3>
             <div class="code-block">
               <div class="code-header">
@@ -2783,13 +2833,20 @@ docker exec kafka kafka-topics.sh \
             </div>
             <div class="quiz-card">
               <div class="quiz-title">⚡ Pregunta Rápida</div>
-              <div class="quiz-question">¿Para qué sirve <code>KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'</code> en la configuración del docker-compose?</div>
+              <div class="quiz-question">¿Para qué sirve <code>KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'</code> en la
+                configuración del docker-compose?</div>
               <div class="quiz-opts">
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Deshabilita todos los topics internos del clúster, incluido <code>__consumer_offsets</code></div>
-                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) Obliga a crear los topics explícitamente con <code>kafka-topics.sh</code>; evita la creación automática por producers</div>
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Impide que los consumers lean de topics existentes hasta que el administrador los apruebe</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Deshabilita todos los topics internos del
+                  clúster, incluido <code>__consumer_offsets</code></div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) Obliga a crear los topics explícitamente con
+                  <code>kafka-topics.sh</code>; evita la creación automática por producers</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Impide que los consumers lean de topics
+                  existentes hasta que el administrador los apruebe</div>
               </div>
-              <div class="quiz-result" id="qr-9">✅ Correcto. Con <code>auto.create.topics.enable=false</code>, si un producer intenta publicar en un topic inexistente, Kafka devuelve un error en lugar de crearlo automáticamente. Esto es una buena práctica: garantiza que los topics se creen con los parámetros correctos (particiones, replicación, retención).</div>
+              <div class="quiz-result" id="qr-9">✅ Correcto. Con <code>auto.create.topics.enable=false</code>, si un
+                producer intenta publicar en un topic inexistente, Kafka devuelve un error en lugar de crearlo
+                automáticamente. Esto es una buena práctica: garantiza que los topics se creen con los parámetros
+                correctos (particiones, replicación, retención).</div>
             </div>
           </div>
           <div class="lesson-nav">
@@ -3160,13 +3217,20 @@ func main() {
             </div>
             <div class="quiz-card">
               <div class="quiz-title">⚡ Pregunta Rápida</div>
-              <div class="quiz-question">En el código Go del consumer, ¿qué hace <code>c.client.MarkCommitRecords(record)</code> después de procesar un mensaje?</div>
+              <div class="quiz-question">En el código Go del consumer, ¿qué hace
+                <code>c.client.MarkCommitRecords(record)</code> después de procesar un mensaje?</div>
               <div class="quiz-opts">
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Elimina el mensaje del topic de Kafka inmediatamente</div>
-                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) Marca el offset del mensaje para ser commiteado en el próximo ciclo de auto-commit</div>
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Envía un ACK directo al broker bloqueando hasta la confirmación</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Elimina el mensaje del topic de Kafka
+                  inmediatamente</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) Marca el offset del mensaje para ser
+                  commiteado en el próximo ciclo de auto-commit</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Envía un ACK directo al broker bloqueando hasta
+                  la confirmación</div>
               </div>
-              <div class="quiz-result" id="qr-10">✅ Correcto. <code>MarkCommitRecords</code> no hace un commit inmediato al broker. Marca el offset localmente para que franz-go lo incluya en el próximo ciclo de auto-commit (configurado con <code>kgo.AutoCommitMarks()</code>). Esto garantiza que solo se commiteen mensajes realmente procesados.</div>
+              <div class="quiz-result" id="qr-10">✅ Correcto. <code>MarkCommitRecords</code> no hace un commit inmediato
+                al broker. Marca el offset localmente para que franz-go lo incluya en el próximo ciclo de auto-commit
+                (configurado con <code>kgo.AutoCommitMarks()</code>). Esto garantiza que solo se commiteen mensajes
+                realmente procesados.</div>
             </div>
           </div>
           <div class="lesson-nav">
@@ -3269,7 +3333,8 @@ func main() {
 
             <h3>Alternativa en Go: Stream processing manual</h3>
             <p>Kafka Streams es Java/Scala. En Go se usa procesamiento manual de streams o librerías como
-              <strong>Watermill</strong> o <strong>Benthos/Redpanda Connect</strong>:</p>
+              <strong>Watermill</strong> o <strong>Benthos/Redpanda Connect</strong>:
+            </p>
             <div class="code-block">
               <div class="code-header">
                 <div class="code-lang">go <span class="code-filename">stream processor en Go</span></div><button
@@ -3338,13 +3403,21 @@ func (w *WindowAggregator) GetTotal(key string) float64 {
             </div>
             <div class="quiz-card">
               <div class="quiz-title">⚡ Pregunta Rápida</div>
-              <div class="quiz-question">¿Cuál es la diferencia fundamental entre un <strong>KStream</strong> y una <strong>KTable</strong> en Kafka Streams?</div>
+              <div class="quiz-question">¿Cuál es la diferencia fundamental entre un <strong>KStream</strong> y una
+                <strong>KTable</strong> en Kafka Streams?</div>
               <div class="quiz-opts">
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) KStream procesa en tiempo real y KTable procesa mensajes en batch cada ciertos intervalos</div>
-                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) KStream es un flujo de eventos inmutables (insert semantics); KTable representa el último estado por key (update semantics, solo conserva el valor más reciente)</div>
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Son equivalentes, solo cambia la sintaxis de la API para diferentes tipos de operaciones</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) KStream procesa en tiempo real y KTable procesa
+                  mensajes en batch cada ciertos intervalos</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) KStream es un flujo de eventos inmutables
+                  (insert semantics); KTable representa el último estado por key (update semantics, solo conserva el
+                  valor más reciente)</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Son equivalentes, solo cambia la sintaxis de la
+                  API para diferentes tipos de operaciones</div>
               </div>
-              <div class="quiz-result" id="qr-11">✅ Correcto. Un KStream modela eventos discretos (cada registro es independiente). Una KTable modela un estado: si llega un nuevo registro con la misma key, actualiza el valor anterior. La KTable es como una vista materializada en tiempo real del último estado por entidad.</div>
+              <div class="quiz-result" id="qr-11">✅ Correcto. Un KStream modela eventos discretos (cada registro es
+                independiente). Una KTable modela un estado: si llega un nuevo registro con la misma key, actualiza el
+                valor anterior. La KTable es como una vista materializada en tiempo real del último estado por entidad.
+              </div>
             </div>
           </div>
           <div class="lesson-nav">
@@ -3476,13 +3549,19 @@ curl http://localhost:8083/connectors/postgres-pedidos-connector/status</code></
             </div>
             <div class="quiz-card">
               <div class="quiz-title">⚡ Pregunta Rápida</div>
-              <div class="quiz-question">¿Qué tipo de conector es <strong>Debezium</strong> y qué patrón implementa?</div>
-              <div class="quiz-opts">
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Es un Sink Connector que lee eventos de Kafka y los escribe en una base de datos</div>
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">B) Es una librería Java que debes incluir en tu microservicio para publicar cambios de BD</div>
-                <div class="quiz-opt" onclick="checkQ(this,'correct')">C) Es un Source Connector que implementa CDC — captura cada INSERT/UPDATE/DELETE de la BD como evento Kafka automáticamente</div>
+              <div class="quiz-question">¿Qué tipo de conector es <strong>Debezium</strong> y qué patrón implementa?
               </div>
-              <div class="quiz-result" id="qr-12">✅ Correcto. Debezium es un Source Connector de Kafka Connect. Lee el <em>transaction log</em> de la base de datos (WAL en PostgreSQL, binlog en MySQL) y convierte cada cambio en un evento Kafka. No requiere modificar el código de la aplicación.</div>
+              <div class="quiz-opts">
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Es un Sink Connector que lee eventos de Kafka y
+                  los escribe en una base de datos</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">B) Es una librería Java que debes incluir en tu
+                  microservicio para publicar cambios de BD</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">C) Es un Source Connector que implementa CDC —
+                  captura cada INSERT/UPDATE/DELETE de la BD como evento Kafka automáticamente</div>
+              </div>
+              <div class="quiz-result" id="qr-12">✅ Correcto. Debezium es un Source Connector de Kafka Connect. Lee el
+                <em>transaction log</em> de la base de datos (WAL en PostgreSQL, binlog en MySQL) y convierte cada
+                cambio en un evento Kafka. No requiere modificar el código de la aplicación.</div>
             </div>
           </div>
           <div class="lesson-nav">
@@ -3502,7 +3581,11 @@ curl http://localhost:8083/connectors/postgres-pedidos-connector/status</code></
             </div>
           </div>
           <div class="lesson-body">
-            <p>Los sistemas basados en Kafka adoptan patrones de arquitectura que van más allá de la mensajería simple. <strong>Event Sourcing</strong> usa Kafka como la única fuente de verdad del sistema. <strong>CQRS</strong> separa escrituras de lecturas para escalar independientemente. El <strong>Saga Pattern</strong> coordina transacciones distribuidas entre microservicios. La <strong>Dead Letter Queue</strong> captura mensajes fallidos para análisis y reprocesamiento.</p>
+            <p>Los sistemas basados en Kafka adoptan patrones de arquitectura que van más allá de la mensajería simple.
+              <strong>Event Sourcing</strong> usa Kafka como la única fuente de verdad del sistema.
+              <strong>CQRS</strong> separa escrituras de lecturas para escalar independientemente. El <strong>Saga
+                Pattern</strong> coordina transacciones distribuidas entre microservicios. La <strong>Dead Letter
+                Queue</strong> captura mensajes fallidos para análisis y reprocesamiento.</p>
             <h3>Event Sourcing</h3>
             <p>En lugar de guardar el <em>estado actual</em> en BD, guardas <strong>la secuencia de eventos que llevaron
                 a ese estado</strong>. Kafka es el log de eventos. El estado se reconstruye reproduciendo los eventos.
@@ -3627,13 +3710,19 @@ func (d *DLQHandler) Handle(ctx context.Context, record *kgo.Record) error {
             </div>
             <div class="quiz-card">
               <div class="quiz-title">⚡ Pregunta Rápida</div>
-              <div class="quiz-question">En el <strong>Saga Pattern</strong> tipo <em>Choreography</em>, ¿cómo se coordinan los microservicios ante un fallo?</div>
+              <div class="quiz-question">En el <strong>Saga Pattern</strong> tipo <em>Choreography</em>, ¿cómo se
+                coordinan los microservicios ante un fallo?</div>
               <div class="quiz-opts">
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Un orquestador central detecta el fallo y llama a los servicios de compensación en orden</div>
-                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) El servicio que falla publica un evento de fallo; otros servicios reaccionan a ese evento publicando sus propios eventos de compensación</div>
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Se usa una base de datos compartida y transacciones ACID distribuidas para revertir los cambios</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Un orquestador central detecta el fallo y llama
+                  a los servicios de compensación en orden</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">B) El servicio que falla publica un evento de
+                  fallo; otros servicios reaccionan a ese evento publicando sus propios eventos de compensación</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">C) Se usa una base de datos compartida y
+                  transacciones ACID distribuidas para revertir los cambios</div>
               </div>
-              <div class="quiz-result" id="qr-13">✅ Correcto. En Choreography-Saga no hay orquestador. Cada servicio conoce solo su próximo paso. Ante un fallo, publica un evento de compensación (ej. <code>inventario-sin-stock</code>) y los servicios afectados reaccionan ejecutando su reversión.</div>
+              <div class="quiz-result" id="qr-13">✅ Correcto. En Choreography-Saga no hay orquestador. Cada servicio
+                conoce solo su próximo paso. Ante un fallo, publica un evento de compensación (ej.
+                <code>inventario-sin-stock</code>) y los servicios afectados reaccionan ejecutando su reversión.</div>
             </div>
           </div>
           <div class="lesson-nav">
@@ -3653,7 +3742,10 @@ func (d *DLQHandler) Handle(ctx context.Context, record *kgo.Record) error {
             </div>
           </div>
           <div class="lesson-body">
-            <p>Un clúster Kafka en producción expuesto sin seguridad es una vulnerabilidad crítica. Kafka implementa seguridad en tres capas complementarias: <strong>TLS</strong> cifra los datos en tránsito, <strong>SASL</strong> autentica la identidad de cada cliente, y las <strong>ACLs</strong> controlan qué operaciones puede ejecutar cada usuario en cada topic o consumer group.</p>
+            <p>Un clúster Kafka en producción expuesto sin seguridad es una vulnerabilidad crítica. Kafka implementa
+              seguridad en tres capas complementarias: <strong>TLS</strong> cifra los datos en tránsito,
+              <strong>SASL</strong> autentica la identidad de cada cliente, y las <strong>ACLs</strong> controlan qué
+              operaciones puede ejecutar cada usuario en cada topic o consumer group.</p>
             <h3>Capas de seguridad</h3>
             <div class="concept-grid">
               <div class="concept-card">
@@ -3787,13 +3879,19 @@ func newSecureClient(cfg SecurityConfig) (*kgo.Client, error) {
             </div>
             <div class="quiz-card">
               <div class="quiz-title">⚡ Pregunta Rápida</div>
-              <div class="quiz-question">¿Cuál es la combinación correcta de capas de seguridad para un cluster Kafka en producción?</div>
+              <div class="quiz-question">¿Cuál es la combinación correcta de capas de seguridad para un cluster Kafka en
+                producción?</div>
               <div class="quiz-opts">
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Solo TLS es suficiente — cifra los datos y autentica implícitamente a los clientes</div>
-                <div class="quiz-opt" onclick="checkQ(this,'wrong')">B) PLAINTEXT con firewall es aceptable en redes internas privadas</div>
-                <div class="quiz-opt" onclick="checkQ(this,'correct')">C) TLS (cifrado en tránsito) + SASL (autenticación de clientes) + ACLs (autorización por operación/topic)</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">A) Solo TLS es suficiente — cifra los datos y
+                  autentica implícitamente a los clientes</div>
+                <div class="quiz-opt" onclick="checkQ(this,'wrong')">B) PLAINTEXT con firewall es aceptable en redes
+                  internas privadas</div>
+                <div class="quiz-opt" onclick="checkQ(this,'correct')">C) TLS (cifrado en tránsito) + SASL
+                  (autenticación de clientes) + ACLs (autorización por operación/topic)</div>
               </div>
-              <div class="quiz-result" id="qr-14">✅ Correcto. Las tres capas son complementarias y ninguna reemplaza a las demás: TLS evita interceptación de mensajes en la red, SASL verifica la identidad del cliente (quién eres), y las ACLs controlan las operaciones permitidas (qué puedes hacer y en qué topics).</div>
+              <div class="quiz-result" id="qr-14">✅ Correcto. Las tres capas son complementarias y ninguna reemplaza a
+                las demás: TLS evita interceptación de mensajes en la red, SASL verifica la identidad del cliente (quién
+                eres), y las ACLs controlan las operaciones permitidas (qué puedes hacer y en qué topics).</div>
             </div>
           </div>
           <div class="lesson-nav">
@@ -4162,15 +4260,15 @@ func monitorLag(ctx context.Context, client *kgo.Client,
       resultEl.classList.add('show', type === 'correct' ? 'ok' : 'fail');
       if (type === 'wrong') {
         const correctText = {
-          'qr-1':  '❌ No. En Kafka los mensajes NO se eliminan al leerlos. Permanecen según la política de retención configurada.',
-          'qr-2':  '❌ No. El Controller gestiona metadatos y liderazgo de particiones, no almacena mensajes ni serializa datos.',
-          'qr-3':  '❌ No. Kafka solo garantiza orden dentro de una partición. La misma key siempre va a la misma partición, pero no hay orden global entre particiones distintas.',
-          'qr-4':  '❌ No. acks=0 y acks=1 tienen riesgo de pérdida de datos. Solo acks=all con idempotencia garantiza durabilidad completa en producción.',
-          'qr-5':  '❌ No. Kafka no da error ni fracciona. Los 2 consumers extras simplemente quedan idle (standby).',
-          'qr-6':  '❌ No. Con RF=3 y min.ISR=2 solo toleras la caída de 1 broker. Si caen 2, solo queda 1 réplica y el cluster rechaza escrituras para evitar pérdida de datos.',
-          'qr-7':  '❌ No. Kafka rechaza el reset si hay consumers activos. Debes detener completamente el grupo antes de ejecutar --reset-offsets --execute.',
-          'qr-8':  '❌ No. Avro es formato binario (menos legible) y requiere Schema Registry. Su ventaja clave es la schema evolution controlada y gobernanza centralizada de contratos de datos.',
-          'qr-9':  '❌ No. Esta configuración solo desactiva la creación automática de topics por parte de producers. Los topics internos de Kafka siguen funcionando normalmente.',
+          'qr-1': '❌ No. En Kafka los mensajes NO se eliminan al leerlos. Permanecen según la política de retención configurada.',
+          'qr-2': '❌ No. El Controller gestiona metadatos y liderazgo de particiones, no almacena mensajes ni serializa datos.',
+          'qr-3': '❌ No. Kafka solo garantiza orden dentro de una partición. La misma key siempre va a la misma partición, pero no hay orden global entre particiones distintas.',
+          'qr-4': '❌ No. acks=0 y acks=1 tienen riesgo de pérdida de datos. Solo acks=all con idempotencia garantiza durabilidad completa en producción.',
+          'qr-5': '❌ No. Kafka no da error ni fracciona. Los 2 consumers extras simplemente quedan idle (standby).',
+          'qr-6': '❌ No. Con RF=3 y min.ISR=2 solo toleras la caída de 1 broker. Si caen 2, solo queda 1 réplica y el cluster rechaza escrituras para evitar pérdida de datos.',
+          'qr-7': '❌ No. Kafka rechaza el reset si hay consumers activos. Debes detener completamente el grupo antes de ejecutar --reset-offsets --execute.',
+          'qr-8': '❌ No. Avro es formato binario (menos legible) y requiere Schema Registry. Su ventaja clave es la schema evolution controlada y gobernanza centralizada de contratos de datos.',
+          'qr-9': '❌ No. Esta configuración solo desactiva la creación automática de topics por parte de producers. Los topics internos de Kafka siguen funcionando normalmente.',
           'qr-10': '❌ No. MarkCommitRecords solo marca el offset localmente; no borra el mensaje ni bloquea esperando ACK del broker. El commit real ocurre en el siguiente ciclo de auto-commit.',
           'qr-11': '❌ No. KStream y KTable tienen semánticas fundamentalmente distintas: insert vs update. No son intercambiables.',
           'qr-12': '❌ No. Debezium es un Source Connector — lee de la BD y escribe en Kafka. Un Sink Connector haría lo contrario.',
