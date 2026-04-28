@@ -1,0 +1,4531 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RabbitMQ Mastery — Mensajería Asíncrona</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Fira+Code:wght@400;500;600&family=Nunito+Sans:wght@300;400;600;700;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/tomorrow-night.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+  <style>
+    :root {
+      --rmq: #10b981;
+      --rmq-dim: #059669;
+      --rmq-glow: rgba(16, 185, 129, .14);
+      --rmq-glow2: rgba(16, 185, 129, .07);
+      --bg: #050d08;
+      --bg-s: #091209;
+      --bg-c: #0d1a0f;
+      --bg-e: #122016;
+      --bd: rgba(16, 185, 129, .15);
+      --bd2: rgba(16, 185, 129, .35);
+      --tx: #e8f5ed;
+      --tx2: #7a9e85;
+      --tx3: #3d5c44;
+      --yel: #fbbf24;
+      --red: #f87171;
+      --blu: #60a5fa;
+      --pur: #a78bfa;
+      --sw: 285px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      font-family: 'Nunito Sans', sans-serif;
+      background: var(--bg);
+      color: var(--tx);
+      min-height: 100vh;
+      overflow-x: hidden
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg)
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--rmq-dim);
+      border-radius: 2px
+    }
+
+    /* ── HEX BG ── */
+    .hex-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+      opacity: .025
+    }
+
+    .hex-bg svg {
+      width: 100%;
+      height: 100%
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: 60px;
+      background: rgba(5, 13, 8, .93);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--bd);
+      display: flex;
+      align-items: center;
+      padding: 0 22px;
+      gap: 14px
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.3rem;
+      color: var(--rmq);
+      letter-spacing: .3px
+    }
+
+    .logo-mark {
+      width: 36px;
+      height: 36px;
+      border: 2px solid var(--rmq);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      position: relative;
+      animation: logo-pulse 4s ease-in-out infinite
+    }
+
+    @keyframes logo-pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 var(--rmq-glow)
+      }
+
+      50% {
+        box-shadow: 0 0 0 8px transparent
+      }
+    }
+
+    .hdr-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px
+    }
+
+    .pg-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .pg-outer {
+      width: 170px;
+      height: 4px;
+      background: var(--bg-e);
+      border-radius: 2px;
+      overflow: hidden
+    }
+
+    .pg-inner {
+      height: 100%;
+      background: linear-gradient(90deg, var(--rmq), var(--yel));
+      border-radius: 2px;
+      transition: width .6s cubic-bezier(.4, 0, .2, 1);
+      width: 0%
+    }
+
+    .pg-lbl {
+      font-family: 'Fira Code', monospace;
+      font-size: .68rem;
+      color: var(--tx3);
+      white-space: nowrap
+    }
+
+    #mob-btn {
+      display: none;
+      background: none;
+      border: 1px solid var(--bd);
+      color: var(--rmq);
+      cursor: pointer;
+      padding: 6px 11px;
+      border-radius: 5px;
+      font-size: 1.1rem
+    }
+
+    .quiz-counter {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Fira Code', monospace;
+      font-size: .7rem;
+      white-space: nowrap
+    }
+
+    .quiz-counter-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 5px;
+      border: 1px solid;
+      font-size: .7rem;
+      transition: all .3s
+    }
+
+    .quiz-counter-item.ok {
+      color: var(--rmq);
+      border-color: var(--rmq-glow2);
+      background: var(--rmq-glow)
+    }
+
+    .quiz-counter-item.fail {
+      color: var(--red);
+      border-color: rgba(248,113,113,.35);
+      background: rgba(248,113,113,.07)
+    }
+
+    @media (max-width: 520px) {
+      .quiz-counter { display: none }
+    }
+
+    /* ── LAYOUT ── */
+    .app {
+      display: flex;
+      padding-top: 60px;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sw);
+      min-height: calc(100vh - 60px);
+      position: fixed;
+      top: 60px;
+      left: 0;
+      background: var(--bg-s);
+      border-right: 1px solid var(--bd);
+      overflow-y: auto;
+      transition: transform .3s ease;
+      z-index: 90
+    }
+
+    .sidebar-in {
+      padding: 12px 0 100px
+    }
+
+    .sg-lbl {
+      font-family: 'Fira Code', monospace;
+      font-weight: 600;
+      font-size: .62rem;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      color: var(--tx3);
+      padding: 14px 20px 5px;
+      margin-top: 6px
+    }
+
+    .ni {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 20px;
+      cursor: pointer;
+      transition: all .18s;
+      border-left: 3px solid transparent;
+      font-size: .9rem;
+      font-weight: 600;
+      color: var(--tx3);
+      user-select: none;
+      text-decoration: none
+    }
+
+    .ni:hover {
+      background: var(--rmq-glow2);
+      color: var(--tx);
+      border-left-color: rgba(16, 185, 129, .4)
+    }
+
+    .ni.active {
+      background: var(--rmq-glow);
+      color: var(--rmq);
+      border-left-color: var(--rmq)
+    }
+
+    .ni.done {
+      color: var(--rmq)
+    }
+
+    .nn {
+      font-family: 'Fira Code', monospace;
+      font-size: .63rem;
+      color: var(--tx3);
+      min-width: 20px
+    }
+
+    .nc {
+      margin-left: auto;
+      font-size: .7rem;
+      color: var(--tx3)
+    }
+
+    .ni.done .nc {
+      color: var(--rmq)
+    }
+
+    /* ── MAIN ── */
+    .main {
+      margin-left: var(--sw);
+      flex: 1;
+      min-height: calc(100vh - 60px)
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      padding: 70px 72px 60px;
+      overflow: hidden;
+      border-bottom: 1px solid var(--bd)
+    }
+
+    .hero-dots {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(var(--bd2) 1px, transparent 1px);
+      background-size: 28px 28px;
+      opacity: .4;
+      pointer-events: none
+    }
+
+    .hero-glow {
+      position: absolute;
+      bottom: -60px;
+      right: 60px;
+      width: 500px;
+      height: 350px;
+      background: radial-gradient(ellipse, rgba(16, 185, 129, .1) 0%, transparent 65%);
+      pointer-events: none
+    }
+
+    .hero-c {
+      position: relative
+    }
+
+    .hero-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Fira Code', monospace;
+      font-size: .7rem;
+      color: var(--rmq);
+      border: 1px solid var(--bd2);
+      background: var(--rmq-glow2);
+      border-radius: 20px;
+      padding: 5px 14px;
+      margin-bottom: 20px;
+      animation: fadeUp .6s ease both
+    }
+
+    .hero-chip i {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--rmq);
+      animation: blink 2s infinite;
+      font-style: normal;
+      display: block
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .2
+      }
+    }
+
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2.6rem, 5.5vw, 4.4rem);
+      line-height: 1.05;
+      letter-spacing: -.5px;
+      animation: fadeUp .7s ease .1s both
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--rmq)
+    }
+
+    .hero-sub {
+      font-size: 1rem;
+      color: var(--tx2);
+      margin-top: 14px;
+      max-width: 540px;
+      line-height: 1.7;
+      animation: fadeUp .7s ease .2s both
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 36px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+      animation: fadeUp .7s ease .3s both
+    }
+
+    .st {
+      display: flex;
+      flex-direction: column;
+      gap: 3px
+    }
+
+    .st-n {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2rem;
+      color: var(--rmq)
+    }
+
+    .st-l {
+      font-family: 'Fira Code', monospace;
+      font-size: .65rem;
+      color: var(--tx3);
+      text-transform: uppercase;
+      letter-spacing: 1px
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(14px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    /* ── MODULE GRID ── */
+    .mod-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+      gap: 14px;
+      padding: 44px 72px
+    }
+
+    .mod-card {
+      background: var(--bg-c);
+      border: 1px solid var(--bd);
+      border-radius: 8px;
+      padding: 22px;
+      cursor: pointer;
+      transition: all .22s;
+      position: relative;
+      overflow: hidden
+    }
+
+    .mod-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--rmq);
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: transform .3s ease
+    }
+
+    .mod-card:hover {
+      border-color: var(--bd2);
+      transform: translateX(3px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .4)
+    }
+
+    .mod-card:hover::before {
+      transform: scaleY(1)
+    }
+
+    .mc-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px
+    }
+
+    .mc-ico {
+      width: 40px;
+      height: 40px;
+      background: var(--rmq-glow);
+      border: 1px solid var(--bd2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0
+    }
+
+    .mc-n {
+      font-family: 'Fira Code', monospace;
+      font-size: .63rem;
+      color: var(--tx3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 2px
+    }
+
+    .mc-t {
+      font-weight: 700;
+      font-size: .95rem;
+      color: var(--tx)
+    }
+
+    .mc-d {
+      font-size: .8rem;
+      color: var(--tx2);
+      line-height: 1.55
+    }
+
+    .mc-st {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 13px;
+      font-family: 'Fira Code', monospace;
+      font-size: .65rem;
+      color: var(--tx3)
+    }
+
+    .mc-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--tx3)
+    }
+
+    .mc-dot.done {
+      background: var(--rmq)
+    }
+
+    /* ── LESSON ── */
+    .lesson {
+      display: none;
+      padding: 52px 72px 90px;
+      max-width: 970px;
+      animation: fadeUp .35s ease both
+    }
+
+    .lesson.active {
+      display: block
+    }
+
+    .lesson-hdr {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 38px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--bd)
+    }
+
+    .l-badge {
+      min-width: 52px;
+      height: 52px;
+      background: var(--rmq);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.3rem;
+      color: var(--bg);
+      flex-shrink: 0
+    }
+
+    .l-title h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.3rem;
+      line-height: 1.05;
+      color: var(--tx)
+    }
+
+    .l-title p {
+      font-size: .88rem;
+      color: var(--tx2);
+      margin-top: 5px;
+      font-style: italic
+    }
+
+    .lb p {
+      color: var(--tx2);
+      margin: 15px 0;
+      font-size: .94rem;
+      line-height: 1.78
+    }
+
+    .lb strong {
+      color: var(--tx);
+      font-weight: 700
+    }
+
+    .lb h3 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.45rem;
+      color: var(--rmq);
+      margin: 36px 0 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .lb h3::before {
+      content: '§';
+      font-size: .85rem;
+      opacity: .5;
+      font-style: normal
+    }
+
+    .lb h4 {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--tx);
+      margin: 18px 0 8px;
+      font-family: 'Nunito Sans', sans-serif
+    }
+
+    .lb ul,
+    .lb ol {
+      padding-left: 22px;
+      color: var(--tx2);
+      font-size: .92rem
+    }
+
+    .lb li {
+      margin: 7px 0
+    }
+
+    .lb li strong {
+      color: var(--tx)
+    }
+
+    /* ── CODE ── */
+    .cb {
+      position: relative;
+      margin: 22px 0;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--bd);
+      background: #0a100c
+    }
+
+    .ch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 16px;
+      background: rgba(255, 255, 255, .025);
+      border-bottom: 1px solid var(--bd)
+    }
+
+    .cl {
+      font-family: 'Fira Code', monospace;
+      font-size: .67rem;
+      color: var(--rmq);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .cf {
+      color: var(--tx3);
+      text-transform: none;
+      letter-spacing: 0
+    }
+
+    .cpbtn {
+      background: none;
+      border: 1px solid var(--bd);
+      color: var(--tx3);
+      font-family: 'Fira Code', monospace;
+      font-size: .66rem;
+      padding: 3px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all .2s
+    }
+
+    .cpbtn:hover {
+      border-color: var(--rmq);
+      color: var(--rmq)
+    }
+
+    .cpbtn.copied {
+      border-color: var(--rmq);
+      color: var(--rmq)
+    }
+
+    .cb pre {
+      margin: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important
+    }
+
+    .cb pre code.hljs {
+      padding: 20px 22px !important;
+      font-size: .84rem !important;
+      font-family: 'Fira Code', monospace !important;
+      line-height: 1.7 !important;
+      background: transparent !important
+    }
+
+    /* ── CALLOUT ── */
+    .cl-box {
+      display: flex;
+      gap: 13px;
+      align-items: flex-start;
+      padding: 14px 18px;
+      border-radius: 7px;
+      margin: 20px 0;
+      font-size: .875rem
+    }
+
+    .cl-box.info {
+      background: rgba(96, 165, 250, .07);
+      border-left: 3px solid var(--blu)
+    }
+
+    .cl-box.warn {
+      background: rgba(251, 191, 36, .07);
+      border-left: 3px solid var(--yel)
+    }
+
+    .cl-box.tip {
+      background: rgba(16, 185, 129, .07);
+      border-left: 3px solid var(--rmq)
+    }
+
+    .cl-box.danger {
+      background: rgba(248, 113, 113, .07);
+      border-left: 3px solid var(--red)
+    }
+
+    .cl-box.key {
+      background: rgba(167, 139, 250, .07);
+      border-left: 3px solid var(--pur)
+    }
+
+    .cl-ico {
+      font-size: .95rem;
+      flex-shrink: 0;
+      margin-top: 2px
+    }
+
+    .cl-bd {
+      color: var(--tx2);
+      line-height: 1.65;
+      font-size: .875rem
+    }
+
+    .cl-bd strong {
+      color: var(--tx)
+    }
+
+    .cl-bd code {
+      font-family: 'Fira Code', monospace;
+      font-size: .8em;
+      color: var(--rmq);
+      background: var(--bg-e);
+      padding: 1px 5px;
+      border-radius: 3px;
+      border: 1px solid var(--bd)
+    }
+
+    /* ── TABLE ── */
+    .tw {
+      overflow-x: auto;
+      margin: 20px 0;
+      border-radius: 7px;
+      border: 1px solid var(--bd)
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .84rem
+    }
+
+    th {
+      background: var(--bg-e);
+      color: var(--rmq);
+      font-family: 'Fira Code', monospace;
+      font-size: .68rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 11px 15px;
+      text-align: left;
+      border-bottom: 1px solid var(--bd)
+    }
+
+    td {
+      padding: 10px 15px;
+      border-bottom: 1px solid rgba(16, 185, 129, .06);
+      color: var(--tx2);
+      vertical-align: top
+    }
+
+    tr:last-child td {
+      border-bottom: none
+    }
+
+    tr:nth-child(even) td {
+      background: rgba(255, 255, 255, .015)
+    }
+
+    /* ── TAGS ── */
+    .tg {
+      display: inline-flex;
+      align-items: center;
+      background: var(--rmq-glow);
+      border: 1px solid var(--bd2);
+      color: var(--rmq);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-family: 'Fira Code', monospace;
+      font-size: .72rem;
+      vertical-align: middle
+    }
+
+    .tg.y {
+      background: rgba(251, 191, 36, .08);
+      border-color: rgba(251, 191, 36, .3);
+      color: var(--yel)
+    }
+
+    .tg.r {
+      background: rgba(248, 113, 113, .08);
+      border-color: rgba(248, 113, 113, .3);
+      color: var(--red)
+    }
+
+    .tg.b {
+      background: rgba(96, 165, 250, .08);
+      border-color: rgba(96, 165, 250, .3);
+      color: var(--blu)
+    }
+
+    .tg.p {
+      background: rgba(167, 139, 250, .08);
+      border-color: rgba(167, 139, 250, .3);
+      color: var(--pur)
+    }
+
+    /* ── CONCEPT GRID ── */
+    .cg {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+      gap: 13px;
+      margin: 18px 0
+    }
+
+    .cc {
+      background: var(--bg-c);
+      border: 1px solid var(--bd);
+      border-radius: 7px;
+      padding: 17px;
+      transition: all .2s
+    }
+
+    .cc:hover {
+      border-color: var(--bd2);
+      transform: translateY(-2px)
+    }
+
+    .cc-ico {
+      font-size: 1.4rem;
+      margin-bottom: 9px
+    }
+
+    .cc h4 {
+      font-weight: 700;
+      font-size: .93rem;
+      margin-bottom: 4px
+    }
+
+    .cc p {
+      font-size: .77rem;
+      color: var(--tx2);
+      line-height: 1.5
+    }
+
+    /* ── ARCH DIAGRAM ── */
+    .arch {
+      background: var(--bg-c);
+      border: 1px solid var(--bd);
+      border-radius: 7px;
+      padding: 26px 22px;
+      margin: 20px 0;
+      font-family: 'Fira Code', monospace;
+      font-size: .79rem;
+      color: var(--tx2);
+      overflow-x: auto;
+      line-height: 1.85;
+      white-space: pre-wrap
+    }
+
+    .arch .at {
+      font-size: .65rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--tx3);
+      margin-bottom: 14px;
+      font-weight: 600
+    }
+
+    .arch .h1 {
+      color: var(--rmq)
+    }
+
+    .arch .h2 {
+      color: var(--yel)
+    }
+
+    .arch .h3 {
+      color: var(--blu)
+    }
+
+    .arch .h4 {
+      color: var(--pur)
+    }
+
+    .arch .dm {
+      color: var(--tx3)
+    }
+
+    .arch .re {
+      color: var(--red)
+    }
+
+    /* ── COMPARE ── */
+    .cmp {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 16px 0
+    }
+
+    @media(max-width:580px) {
+      .cmp {
+        grid-template-columns: 1fr
+      }
+    }
+
+    .cmp-box {
+      background: var(--bg-c);
+      border: 1px solid var(--bd);
+      border-radius: 7px;
+      padding: 16px
+    }
+
+    .cmp-box h5 {
+      font-family: 'Fira Code', monospace;
+      font-size: .68rem;
+      color: var(--tx3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px
+    }
+
+    .cmp-box.hi {
+      border-color: var(--bd2)
+    }
+
+    /* ── STEPS ── */
+    .steps {
+      counter-reset: s;
+      list-style: none;
+      padding: 0;
+      margin: 14px 0
+    }
+
+    .steps li {
+      counter-increment: s;
+      display: flex;
+      gap: 13px;
+      align-items: flex-start;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--bd);
+      font-size: .88rem;
+      color: var(--tx2)
+    }
+
+    .steps li:last-child {
+      border-bottom: none
+    }
+
+    .steps li::before {
+      content: counter(s);
+      min-width: 26px;
+      height: 26px;
+      background: var(--rmq-glow);
+      border: 1px solid var(--bd2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Fira Code', monospace;
+      font-size: .7rem;
+      color: var(--rmq);
+      flex-shrink: 0
+    }
+
+    /* ── PARTITION VIZ / FLOW ── */
+    .flow-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 18px 0;
+      flex-wrap: wrap
+    }
+
+    .flow-box {
+      background: var(--bg-c);
+      border: 1px solid var(--bd);
+      border-radius: 7px;
+      padding: 12px 16px;
+      font-family: 'Fira Code', monospace;
+      font-size: .75rem;
+      color: var(--tx2);
+      text-align: center;
+      min-width: 90px
+    }
+
+    .flow-box.rmq {
+      border-color: var(--bd2);
+      color: var(--rmq);
+      background: var(--rmq-glow)
+    }
+
+    .flow-box.yel {
+      border-color: rgba(251, 191, 36, .3);
+      color: var(--yel)
+    }
+
+    .flow-box.blu {
+      border-color: rgba(96, 165, 250, .3);
+      color: var(--blu)
+    }
+
+    .flow-arr {
+      font-size: 1.1rem;
+      color: var(--tx3);
+      padding: 0 8px;
+      flex-shrink: 0
+    }
+
+    .flow-lbl {
+      font-size: .63rem;
+      display: block;
+      opacity: .7;
+      margin-top: 2px
+    }
+
+    /* ── QUIZ SECTION ── */
+    .quiz-wrap {
+      background: var(--bg-c);
+      border: 1px solid var(--bd2);
+      border-radius: 10px;
+      padding: 28px;
+      margin: 36px 0
+    }
+
+    .quiz-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.5rem;
+      color: var(--tx);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .quiz-subtitle {
+      font-size: .83rem;
+      color: var(--tx3);
+      margin-bottom: 24px;
+      font-family: 'Fira Code', monospace
+    }
+
+    .q-block {
+      margin-bottom: 26px;
+      padding-bottom: 26px;
+      border-bottom: 1px solid var(--bd)
+    }
+
+    .q-block:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0
+    }
+
+    .q-num {
+      font-family: 'Fira Code', monospace;
+      font-size: .65rem;
+      color: var(--rmq);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 6px
+    }
+
+    .q-text {
+      font-size: .93rem;
+      color: var(--tx);
+      margin-bottom: 14px;
+      line-height: 1.65;
+      font-weight: 600
+    }
+
+    .q-opts {
+      display: flex;
+      flex-direction: column;
+      gap: 7px
+    }
+
+    .q-opt {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--bg-e);
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: .84rem;
+      color: var(--tx2);
+      transition: all .18s;
+      user-select: none;
+      line-height: 1.5
+    }
+
+    .q-opt:hover {
+      border-color: var(--bd2);
+      color: var(--tx)
+    }
+
+    .q-opt.selected {
+      border-color: var(--bd2);
+      color: var(--tx);
+      background: rgba(16, 185, 129, .1)
+    }
+
+    .q-opt.correct {
+      border-color: var(--rmq) !important;
+      color: var(--rmq) !important;
+      background: var(--rmq-glow) !important
+    }
+
+    .q-opt.wrong {
+      border-color: var(--red) !important;
+      color: var(--red) !important;
+      background: rgba(248, 113, 113, .07) !important
+    }
+
+    .q-opt.reveal {
+      border-color: var(--rmq) !important;
+      color: var(--rmq) !important;
+      background: var(--rmq-glow) !important;
+      opacity: .6
+    }
+
+    .q-let {
+      min-width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      background: var(--bd);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Fira Code', monospace;
+      font-size: .68rem;
+      flex-shrink: 0;
+      margin-top: 1px
+    }
+
+    .q-exp {
+      margin-top: 9px;
+      padding: 10px 13px;
+      border-radius: 5px;
+      font-size: .82rem;
+      display: none;
+      line-height: 1.6
+    }
+
+    .q-exp.show {
+      display: block
+    }
+
+    .q-exp.ok {
+      background: var(--rmq-glow);
+      color: var(--rmq)
+    }
+
+    .q-exp.fail {
+      background: rgba(248, 113, 113, .07);
+      color: var(--red)
+    }
+
+    .quiz-score {
+      display: none;
+      margin-top: 20px;
+      padding: 16px 20px;
+      border-radius: 8px;
+      font-family: 'Fira Code', monospace;
+      font-size: .9rem;
+      text-align: center
+    }
+
+    .quiz-score.show {
+      display: block
+    }
+
+    .quiz-score.great {
+      background: var(--rmq-glow);
+      border: 1px solid var(--bd2);
+      color: var(--rmq)
+    }
+
+    .quiz-score.ok {
+      background: rgba(251, 191, 36, .07);
+      border: 1px solid rgba(251, 191, 36, .3);
+      color: var(--yel)
+    }
+
+    .quiz-score.poor {
+      background: rgba(248, 113, 113, .07);
+      border: 1px solid rgba(248, 113, 113, .3);
+      color: var(--red)
+    }
+
+    .quiz-check-btn {
+      margin-top: 18px;
+      background: var(--rmq);
+      border: none;
+      color: var(--bg);
+      font-family: 'Fira Code', monospace;
+      font-size: .82rem;
+      font-weight: 600;
+      padding: 10px 24px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all .2s;
+      letter-spacing: .5px;
+      text-transform: uppercase
+    }
+
+    .quiz-check-btn:hover {
+      background: #0ea472
+    }
+
+    .quiz-check-btn:disabled {
+      opacity: .4;
+      cursor: not-allowed
+    }
+
+    /* ── QUIZ CARD (go-course style) ── */
+    .quiz-card {
+      background: var(--bg-c);
+      border: 1px solid var(--bd2);
+      border-radius: 10px;
+      padding: 24px;
+      margin: 28px 0
+    }
+
+    .quiz-card h4 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: var(--rmq);
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .quiz-card > p {
+      font-size: .88rem;
+      color: var(--tx2);
+      margin-bottom: 14px;
+      line-height: 1.6
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .quiz-opt {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--bg-e);
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: .84rem;
+      font-family: 'Fira Code', monospace;
+      color: var(--tx2);
+      transition: all .18s;
+      user-select: none;
+      line-height: 1.5
+    }
+
+    .quiz-opt:hover {
+      border-color: var(--bd2);
+      color: var(--tx)
+    }
+
+    .quiz-opt.correct {
+      border-color: var(--rmq) !important;
+      color: var(--rmq) !important;
+      background: var(--rmq-glow) !important;
+      cursor: default
+    }
+
+    .quiz-opt.wrong {
+      border-color: var(--red) !important;
+      color: var(--red) !important;
+      background: rgba(248,113,113,.07) !important;
+      cursor: default
+    }
+
+    .quiz-result {
+      margin-top: 12px;
+      font-size: .82rem;
+      font-family: 'Fira Code', monospace;
+      padding: 10px 13px;
+      border-radius: 6px;
+      display: none;
+      line-height: 1.6
+    }
+
+    .quiz-result.show { display: block }
+
+    .quiz-result.ok {
+      background: var(--rmq-glow);
+      color: var(--rmq)
+    }
+
+    .quiz-result.fail {
+      background: rgba(248,113,113,.07);
+      color: var(--red)
+    }
+
+    /* ── GLOSSARY TOOLTIPS ── */
+    .term {
+      border-bottom: 2px dashed var(--rmq);
+      cursor: help;
+      color: inherit;
+      position: relative;
+      display: inline;
+    }
+
+    .term::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 9px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-c);
+      border: 1px solid var(--bd2);
+      color: var(--tx);
+      font-family: 'Nunito Sans', sans-serif;
+      font-size: 0.76rem;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 1.55;
+      padding: 10px 14px;
+      border-radius: 8px;
+      width: 270px;
+      white-space: normal;
+      z-index: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
+      box-shadow: 0 8px 28px rgba(0,0,0,.55);
+      text-align: left;
+    }
+
+    .term::before {
+      content: '';
+      position: absolute;
+      bottom: calc(100% + 3px);
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--bd2);
+      z-index: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
+    }
+
+    .term:hover::after,
+    .term:hover::before,
+    .term.tip-open::after,
+    .term.tip-open::before {
+      opacity: 1;
+    }
+
+    @media (max-width: 768px) {
+      .term::after {
+        width: 210px;
+        font-size: 0.72rem;
+      }
+    }
+
+    /* ── NAV ── */
+    .lesson-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 48px;
+      padding-top: 22px;
+      border-top: 1px solid var(--bd)
+    }
+
+    .nbtn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-family: 'Fira Code', monospace;
+      font-size: .77rem;
+      cursor: pointer;
+      transition: all .2s;
+      text-decoration: none
+    }
+
+    .nbtn.prev {
+      background: var(--bg-e);
+      border: 1px solid var(--bd);
+      color: var(--tx2)
+    }
+
+    .nbtn.prev:hover {
+      border-color: var(--bd2);
+      color: var(--tx)
+    }
+
+    .nbtn.next {
+      background: var(--rmq);
+      border: 1px solid var(--rmq);
+      color: var(--bg);
+      font-weight: 700
+    }
+
+    .nbtn.next:hover {
+      background: var(--rmq-dim)
+    }
+
+    .done-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 16px;
+      background: none;
+      border: 1px solid var(--bd);
+      color: var(--tx2);
+      border-radius: 5px;
+      font-family: 'Fira Code', monospace;
+      font-size: .74rem;
+      cursor: pointer;
+      transition: all .2s
+    }
+
+    .done-btn:hover {
+      border-color: var(--rmq);
+      color: var(--rmq)
+    }
+
+    .done-btn.done {
+      border-color: var(--rmq);
+      color: var(--rmq);
+      background: var(--rmq-glow)
+    }
+
+    /* ── INLINE CODE ── */
+    code:not(.hljs) {
+      font-family: 'Fira Code', monospace;
+      font-size: .82em;
+      background: var(--bg-e);
+      color: var(--rmq);
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--bd)
+    }
+
+    /* ── OVERLAY ── */
+    .reset-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      background: none;
+      border: 1px solid rgba(248,113,113,.35);
+      color: var(--red);
+      border-radius: 5px;
+      font-family: 'Fira Code', monospace;
+      font-size: .68rem;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap
+    }
+
+    .reset-btn:hover {
+      background: rgba(248,113,113,.1);
+      border-color: var(--red)
+    }
+
+    @media (max-width: 520px) {
+      .reset-btn { display: none }
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .7);
+      z-index: 80
+    }
+
+    .overlay.show {
+      display: block
+    }
+
+    @media(max-width:768px) {
+      :root {
+        --sw: 0px
+      }
+
+      .sidebar {
+        transform: translateX(-285px);
+        width: 285px
+      }
+
+      .sidebar.open {
+        transform: translateX(0)
+      }
+
+      .main {
+        margin-left: 0
+      }
+
+      #mob-btn {
+        display: block
+      }
+
+      .hero {
+        padding: 36px 20px 36px
+      }
+
+      .lesson {
+        padding: 28px 20px 60px
+      }
+
+      .mod-grid {
+        padding: 20px
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Background pattern -->
+  <div class="hex-bg">
+    <svg xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="hex" x="0" y="0" width="60" height="52" patternUnits="userSpaceOnUse">
+          <polygon points="30,2 58,17 58,47 30,62 2,47 2,17" fill="none" stroke="#10b981" stroke-width=".5" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#hex)" />
+    </svg>
+  </div>
+
+  <header>
+    <button id="mob-btn" onclick="toggleSidebar()">☰</button>
+    <div class="logo">
+      <div class="logo-mark">🐇</div>
+      RabbitMQ Mastery
+    </div>
+    <div class="hdr-right">
+      <button class="reset-btn" onclick="resetCourse()" title="Resetear progreso del curso">↺ Reset</button>
+      <div class="quiz-counter">
+        <span class="quiz-counter-item ok" id="quiz-ok">✓ 0</span>
+        <span class="quiz-counter-item fail" id="quiz-fail">✗ 0</span>
+      </div>
+      <div class="pg-wrap">
+        <div class="pg-outer">
+          <div class="pg-inner" id="pgbar"></div>
+        </div>
+        <span class="pg-lbl" id="pglbl">0 / 15</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+  <div class="app">
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-in">
+        <div class="sg-lbl">Inicio</div>
+        <a class="ni active" onclick="showHome()" href="javascript:void(0)"><span class="nn">00</span>Vista General<span
+            class="nc" id="chk-0">—</span></a>
+
+        <div class="sg-lbl">Primeros Pasos</div>
+        <a class="ni" onclick="goTo(1)" href="javascript:void(0)"><span class="nn">01</span>¿Qué es RabbitMQ?<span
+            class="nc" id="chk-1">—</span></a>
+        <a class="ni" onclick="goTo(10)" href="javascript:void(0)"><span class="nn">02</span>Setup con Docker<span
+            class="nc" id="chk-10">—</span></a>
+
+        <div class="sg-lbl">Fundamentos</div>
+        <a class="ni" onclick="goTo(2)" href="javascript:void(0)"><span class="nn">03</span>Arquitectura AMQP<span
+            class="nc" id="chk-2">—</span></a>
+        <a class="ni" onclick="goTo(3)" href="javascript:void(0)"><span class="nn">04</span>Exchanges y Tipos<span
+            class="nc" id="chk-3">—</span></a>
+        <a class="ni" onclick="goTo(4)" href="javascript:void(0)"><span class="nn">05</span>Queues y Bindings<span
+            class="nc" id="chk-4">—</span></a>
+
+        <div class="sg-lbl">Mensajería</div>
+        <a class="ni" onclick="goTo(5)" href="javascript:void(0)"><span class="nn">06</span>Producers<span class="nc"
+            id="chk-5">—</span></a>
+        <a class="ni" onclick="goTo(6)" href="javascript:void(0)"><span class="nn">07</span>Consumers<span class="nc"
+            id="chk-6">—</span></a>
+        <a class="ni" onclick="goTo(7)" href="javascript:void(0)"><span class="nn">08</span>Acknowledgements<span
+            class="nc" id="chk-7">—</span></a>
+        <a class="ni" onclick="goTo(8)" href="javascript:void(0)"><span class="nn">09</span>Patrones de Mensajería<span
+            class="nc" id="chk-8">—</span></a>
+        <a class="ni" onclick="goTo(9)" href="javascript:void(0)"><span class="nn">10</span>Dead Letter Queues<span
+            class="nc" id="chk-9">—</span></a>
+
+        <div class="sg-lbl">Integración Go</div>
+        <a class="ni" onclick="goTo(11)" href="javascript:void(0)"><span class="nn">11</span>RabbitMQ con Go<span
+            class="nc" id="chk-11">—</span></a>
+
+        <div class="sg-lbl">Producción</div>
+        <a class="ni" onclick="goTo(12)" href="javascript:void(0)"><span class="nn">12</span>Plugins y Management<span
+            class="nc" id="chk-12">—</span></a>
+        <a class="ni" onclick="goTo(13)" href="javascript:void(0)"><span class="nn">13</span>Clustering y Alta
+          Disponibilidad<span class="nc" id="chk-13">—</span></a>
+        <a class="ni" onclick="goTo(14)" href="javascript:void(0)"><span class="nn">14</span>Seguridad<span class="nc"
+            id="chk-14">—</span></a>
+        <a class="ni" onclick="goTo(15)" href="javascript:void(0)"><span class="nn">15</span>Monitoreo y
+          Operaciones<span class="nc" id="chk-15">—</span></a>
+      </div>
+    </nav>
+
+    <main class="main">
+      <!-- HOME -->
+      <div id="home-screen">
+        <div class="hero">
+          <div class="hero-dots"></div>
+          <div class="hero-glow"></div>
+          <div class="hero-c">
+            <div class="hero-chip"><i></i>RabbitMQ 3.13 · AMQP 0-9-1 · Curso Completo · Español</div>
+            <h1>Mensajería<br><em>Asíncrona</em><br>Profesional</h1>
+            <p class="hero-sub">Aprende RabbitMQ desde sus fundamentos hasta el despliegue en producción. Exchanges,
+              queues, patrones de mensajería, integración con Go y arquitecturas de microservicios desacoplados.</p>
+            <div class="hero-stats">
+              <div class="st"><span class="st-n">15</span><span class="st-l">Módulos</span></div>
+              <div class="st"><span class="st-n">15</span><span class="st-l">Tests</span></div>
+              <div class="st"><span class="st-n">70+</span><span class="st-l">Ejemplos</span></div>
+              <div class="st"><span class="st-n">Go</span><span class="st-l">Integración</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="mod-grid" id="mgrid"></div>
+      </div>
+
+      <!-- LESSONS -->
+      <div id="lwrap">
+
+        <!-- ═══════════════ LESSON 1 ═══════════════ -->
+        <div class="lesson" id="lesson-1">
+          <div class="lesson-hdr">
+            <div class="l-badge">1</div>
+            <div class="l-title">
+              <h2>¿Qué es RabbitMQ?</h2>
+              <p>Historia, propósito y cuándo elegirlo sobre otras soluciones</p>
+            </div>
+          </div>
+          <div class="lb">
+            <p>RabbitMQ es un <strong>message broker open-source</strong>: un servidor intermediario que recibe mensajes de unas aplicaciones y los entrega a otras. Está escrito en Erlang, fue creado en 2007 y hoy es uno de los más usados en el mundo. Implementa el protocolo <strong>AMQP 0-9-1</strong>, que define exactamente cómo viajan los mensajes entre productores, el broker y consumidores.</p>
+            <p>La idea central es simple: en vez de que el <strong>Servicio A</strong> llame directamente al <strong>Servicio B</strong> y espere su respuesta (y falle si B está caído), A le deja un mensaje a RabbitMQ. B lo recoge cuando esté disponible. Los dos servicios no necesitan conocerse ni estar activos al mismo tiempo.</p>
+
+            <div class="cg">
+              <div class="cc">
+                <div class="cc-ico">📬</div>
+                <h4>Message Broker</h4>
+                <p>Intermediario que recibe, enruta y entrega mensajes entre aplicaciones desacopladas.</p>
+              </div>
+              <div class="cc">
+                <div class="cc-ico">⚡</div>
+                <h4>Alto Rendimiento</h4>
+                <p>Decenas de miles de mensajes/seg. Erlang le da concurrencia masiva y tolerancia a fallos.</p>
+              </div>
+              <div class="cc">
+                <div class="cc-ico">🔀</div>
+                <h4>Enrutamiento flexible</h4>
+                <p>Exchanges con múltiples estrategias: direct, fanout, topic, headers.</p>
+              </div>
+              <div class="cc">
+                <div class="cc-ico">✅</div>
+                <h4>ACKs garantizados</h4>
+                <p>Confirmaciones de entrega en ambos sentidos: publisher confirms y consumer acks.</p>
+              </div>
+            </div>
+
+            <h3>¿Por qué mensajería asíncrona?</h3>
+            <p>En arquitecturas de microservicios, la comunicación <strong>síncrona HTTP</strong> crea acoplamiento
+              temporal: si el servicio B está caído, A falla. La mensajería asíncrona rompe ese acoplamiento.</p>
+
+            <div class="cmp">
+              <div class="cmp-box">
+                <h5>Comunicación Síncrona (HTTP)</h5>
+                <ul style="font-size:.82rem;color:var(--tx2);padding-left:16px">
+                  <li>A llama a B y espera respuesta</li>
+                  <li>Si B falla, A también falla</li>
+                  <li>Escala acoplado</li>
+                  <li>Latencia de red directa</li>
+                  <li>Ideal: operaciones de lectura, APIs públicas</li>
+                </ul>
+              </div>
+              <div class="cmp-box hi">
+                <h5>Mensajería Asíncrona (RabbitMQ) ✅</h5>
+                <ul style="font-size:.82rem;color:var(--tx2);padding-left:16px">
+                  <li>A publica mensaje y continúa</li>
+                  <li>Si B falla, el mensaje espera en la queue</li>
+                  <li>Productores y consumidores escalan independientemente</li>
+                  <li>Buffer natural ante picos de tráfico</li>
+                  <li>Ideal: operaciones de escritura, workflows, tasks</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3>RabbitMQ vs Kafka — ¿Cuándo usar cuál?</h3>
+            <div class="tw">
+              <table>
+                <tr>
+                  <th>Criterio</th>
+                  <th>RabbitMQ</th>
+                  <th>Kafka</th>
+                </tr>
+                <tr>
+                  <td><strong>Modelo</strong></td>
+                  <td>Message queue (broker inteligente)</td>
+                  <td>Distributed log (broker tonto)</td>
+                </tr>
+                <tr>
+                  <td><strong>Retención</strong></td>
+                  <td>Mensaje se elimina al hacer ACK</td>
+                  <td>Mensaje persiste N días</td>
+                </tr>
+                <tr>
+                  <td><strong>Enrutamiento</strong></td>
+                  <td>Muy flexible (exchanges, bindings)</td>
+                  <td>Simple (topic + partition key)</td>
+                </tr>
+                <tr>
+                  <td><strong>Orden</strong></td>
+                  <td>FIFO por queue, no global</td>
+                  <td>Orden garantizado por partición</td>
+                </tr>
+                <tr>
+                  <td><strong>Throughput</strong></td>
+                  <td>~50K msg/s por nodo</td>
+                  <td>Millones msg/s</td>
+                </tr>
+                <tr>
+                  <td><strong>Latencia</strong></td>
+                  <td>Sub-milisegundo</td>
+                  <td>Milisegundos</td>
+                </tr>
+                <tr>
+                  <td><strong>Ideal para</strong></td>
+                  <td>Tasks, workflows, RPC, routing complejo</td>
+                  <td>Streaming, analytics, event sourcing</td>
+                </tr>
+              </table>
+            </div>
+
+            <h3>Casos de uso reales</h3>
+            <ul>
+              <li><strong>Procesamiento de pedidos</strong>: el servicio web publica el pedido, servicios de
+                inventario/pago/notificación los consumen independientemente.</li>
+              <li><strong>Envío de emails/SMS</strong>: la app encola mensajes, workers los procesan sin bloquear la
+                respuesta HTTP.</li>
+              <li><strong>Microservicios RPC</strong>: llamadas asíncronas con reply queues para respuestas.</li>
+              <li><strong>Rate limiting</strong>: las queues actúan como buffer ante picos de tráfico.</li>
+              <li><strong>Workflows complejos</strong>: mensajes enrutados a diferentes servicios según su contenido.
+              </li>
+            </ul>
+
+            <div class="cl-box tip">
+              <div class="cl-ico">🐇</div>
+              <div class="cl-bd"><strong>Regla simple:</strong> Si necesitas enrutamiento inteligente, confirmación de
+                entrega garantizada, o trabajas con tareas discretas y workflows — elige <strong>RabbitMQ</strong>. Si
+                necesitas replay de eventos, analytics o millones de mensajes/segundo — elige <strong>Kafka</strong>.
+              </div>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <h4>🧠 Pregunta rápida</h4>
+            <p>¿Qué ocurre con un mensaje en RabbitMQ después de que un consumer lo procesa y envía el ACK?</p>
+            <div class="quiz-options">
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">A) El mensaje se guarda en disco para auditoría por 7 días.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'correct')">B) El mensaje se elimina de la queue (ha sido entregado exitosamente).</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">C) El mensaje pasa a una queue de archivo automáticamente.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">D) El mensaje queda marcado como leído pero no se elimina.</div>
+            </div>
+            <div class="quiz-result" data-wrong="❌ Incorrecto. Cuando el consumer confirma con ACK, RabbitMQ elimina el mensaje de la queue. Fue entregado exitosamente. Esto lo diferencia de Kafka, donde los mensajes persisten.">✅ Correcto. RabbitMQ es un message broker: al recibir el ACK, el mensaje se considera entregado y se elimina de la queue. Kafka lo hace diferente — allí los mensajes persisten independientemente.</div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nbtn prev" onclick="showHome()">← Vista General</button>
+            <button class="done-btn" id="done-1" onclick="markDone(1)">✓ Marcar visto</button>
+            <button class="nbtn next" onclick="goTo(10)">Setup con Docker →</button>
+          </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 2 ═══════════════ -->
+        <div class="lesson" id="lesson-2">
+          <div class="lesson-hdr">
+            <div class="l-badge">2</div>
+            <div class="l-title">
+              <h2>Arquitectura AMQP</h2>
+              <p>El protocolo base: conexiones, canales y el modelo de mensajería</p>
+            </div>
+          </div>
+          <div class="lb">
+            <p>RabbitMQ implementa el protocolo <strong>AMQP 0-9-1</strong>. Antes de escribir código, es importante entender las piezas que componen este modelo: cada una tiene un rol claro, y juntas forman el camino que recorre un mensaje desde que se publica hasta que se procesa.</p>
+
+            <h3>Componentes del modelo AMQP</h3>
+            <div class="cg">
+              <div class="cc">
+                <div class="cc-ico">📤</div>
+                <h4>Producer</h4>
+                <p>Aplicación que publica mensajes al broker. Solo habla con exchanges, nunca con queues directamente.
+                </p>
+              </div>
+              <div class="cc">
+                <div class="cc-ico">🔀</div>
+                <h4>Exchange</h4>
+                <p>Recibe mensajes del producer y los enruta a queues según reglas (bindings). El "cerebro" del
+                  enrutamiento.</p>
+              </div>
+              <div class="cc">
+                <div class="cc-ico">📦</div>
+                <h4>Queue</h4>
+                <p>Buffer donde los mensajes esperan ser consumidos. FIFO. Puede ser durable (persiste reinicios) o
+                  transient.</p>
+              </div>
+              <div class="cc">
+                <div class="cc-ico">🔗</div>
+                <h4>Binding</h4>
+                <p>Regla que conecta un Exchange con una Queue, con una routing key opcional.</p>
+              </div>
+              <div class="cc">
+                <div class="cc-ico">📥</div>
+                <h4>Consumer</h4>
+                <p>Aplicación que se suscribe a una queue y recibe mensajes. Confirma con ACK o rechaza con NACK.</p>
+              </div>
+              <div class="cc">
+                <div class="cc-ico">🏠</div>
+                <h4>Virtual Host</h4>
+                <p>Namespace lógico de aislamiento. Cada vhost tiene sus propios exchanges, queues y usuarios.</p>
+              </div>
+            </div>
+
+            <h3>Flujo completo de un mensaje</h3>
+            <div class="arch">
+              <div class="at">Ciclo de vida de un mensaje AMQP</div>
+              <span class="h1">[Producer]</span>
+              │ 1. Abre Connection TCP al broker
+              │ 2. Abre Channel (multiplexado sobre la connection)
+              │ 3. Publica mensaje a un Exchange + routing_key
+              ▼
+              <span class="h2">[Exchange]</span>
+              │ 4. Evalúa las reglas de binding
+              │ 5. Enruta el mensaje a la(s) queue(s) correspondiente(s)
+              ▼
+              <span class="h1">[Queue]</span>
+              │ 6. Almacena el mensaje (en RAM o disco si es persistent)
+              │ 7. Aguarda hasta que un consumer esté disponible
+              ▼
+              <span class="h3">[Consumer]</span>
+              │ 8. Recibe el mensaje vía push (subscribe) o pull (basic.get)
+              │ 9. Procesa el mensaje
+              │ 10. Envía ACK → broker elimina el mensaje
+              └ (o NACK → broker reencola o descarta)
+            </div>
+
+            <h3>Connection vs Channel</h3>
+            <p>Esta distinción es crítica para el rendimiento. <strong>Abrir una conexión TCP por cada operación es muy
+                costoso</strong>. AMQP soluciona esto con channels.</p>
+            <div class="cmp">
+              <div class="cmp-box">
+                <h5>Connection (TCP)</h5>
+                <ul style="font-size:.82rem;color:var(--tx2);padding-left:16px">
+                  <li>Conexión TCP real al broker</li>
+                  <li>Costosa de abrir (handshake)</li>
+                  <li>1 por aplicación (o pocas)</li>
+                  <li>Mantenida con heartbeats</li>
+                </ul>
+              </div>
+              <div class="cmp-box hi">
+                <h5>Channel (virtual) ✅</h5>
+                <ul style="font-size:.82rem;color:var(--tx2);padding-left:16px">
+                  <li>Canal virtual sobre la Connection</li>
+                  <li>Ligero, barato de crear</li>
+                  <li>1 por goroutine/thread</li>
+                  <li>Permite operaciones paralelas</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="cl-box warn">
+              <div class="cl-ico">⚠️</div>
+              <div class="cl-bd"><strong>Anti-pattern:</strong> Nunca compartas un channel entre goroutines — no es
+                thread-safe. Usa 1 channel por goroutine. La Connection sí puede compartirse.</div>
+            </div>
+
+            <h3>Virtual Hosts (vhosts)</h3>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">bash <span class="cf">gestión de vhosts</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Crear vhost por entorno/aplicación
+rabbitmqctl add_vhost /produccion
+rabbitmqctl add_vhost /staging
+rabbitmqctl add_vhost /mi-app-dev
+
+# Dar permisos a un usuario en un vhost
+# Formato: configure_regex  write_regex  read_regex
+rabbitmqctl set_permissions -p /produccion mi-service ".*" ".*" ".*"
+
+# Listar vhosts
+rabbitmqctl list_vhosts
+
+# Conectarse a un vhost específico (en la URL de conexión)
+# amqp://usuario:password@host:5672/produccion
+# amqp://usuario:password@host:5672/%2F  (vhost "/" codificado)</code></pre>
+            </div>
+
+            <h3>Propiedades de un mensaje</h3>
+            <div class="tw">
+              <table>
+                <tr>
+                  <th>Propiedad</th>
+                  <th>Tipo</th>
+                  <th>Descripción</th>
+                </tr>
+                <tr>
+                  <td><code>content_type</code></td>
+                  <td>string</td>
+                  <td>MIME type del cuerpo: <code>application/json</code>, <code>text/plain</code></td>
+                </tr>
+                <tr>
+                  <td><code>delivery_mode</code></td>
+                  <td>1 o 2</td>
+                  <td>1 = transient (solo RAM), 2 = persistent (disco)</td>
+                </tr>
+                <tr>
+                  <td><code>priority</code></td>
+                  <td>0-255</td>
+                  <td>Prioridad del mensaje (requiere queue con max-priority)</td>
+                </tr>
+                <tr>
+                  <td><code>correlation_id</code></td>
+                  <td>string</td>
+                  <td>ID para correlacionar request con response en patrón RPC</td>
+                </tr>
+                <tr>
+                  <td><code>reply_to</code></td>
+                  <td>string</td>
+                  <td>Nombre de la queue donde enviar la respuesta (patrón RPC)</td>
+                </tr>
+                <tr>
+                  <td><code>expiration</code></td>
+                  <td>string (ms)</td>
+                  <td>TTL del mensaje en milisegundos</td>
+                </tr>
+                <tr>
+                  <td><code>message_id</code></td>
+                  <td>string</td>
+                  <td>Identificador único del mensaje (lo pone el producer)</td>
+                </tr>
+                <tr>
+                  <td><code>headers</code></td>
+                  <td>map</td>
+                  <td>Headers personalizados para enrutamiento o metadata</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <h4>🧠 Pregunta rápida</h4>
+            <p>Tienes una app Go con 10 goroutines que necesitan publicar mensajes a RabbitMQ. ¿Cuál es la práctica correcta?</p>
+            <div class="quiz-options">
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">A) Abrir 10 conexiones TCP, una por goroutine.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">B) Usar 1 canal compartido entre todas las goroutines con un mutex.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'correct')">C) 1 conexión TCP compartida + 1 canal por goroutine.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">D) 1 conexión TCP y 1 canal total para toda la aplicación.</div>
+            </div>
+            <div class="quiz-result" data-wrong="❌ Incorrecto. La práctica correcta es 1 conexión TCP compartida + 1 canal por goroutine. Los canales no son thread-safe — no se pueden compartir entre goroutines. Las conexiones TCP son costosas de abrir.">✅ Correcto. Una Connection TCP por aplicación (costosa) + un Channel por goroutine (ligero, no es thread-safe). Este es el patrón idiomático de AMQP.</div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nbtn prev" onclick="goTo(10)">← Setup con Docker</button>
+            <button class="done-btn" id="done-2" onclick="markDone(2)">✓ Marcar visto</button>
+            <button class="nbtn next" onclick="goTo(3)">Exchanges y Tipos →</button>
+          </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 3 ═══════════════ -->
+        <div class="lesson" id="lesson-3">
+          <div class="lesson-hdr">
+            <div class="l-badge">3</div>
+            <div class="l-title">
+              <h2>Exchanges y Tipos</h2>
+              <p>El corazón del enrutamiento: Direct, Fanout, Topic y Headers</p>
+            </div>
+          </div>
+          <div class="lb">
+            <p>El <strong>Exchange</strong> es la pieza que decide adónde va cada mensaje. El producer nunca escribe directamente en una queue — siempre le entrega el mensaje al exchange, que lo enruta usando sus reglas de binding. Hay cuatro tipos de exchange, cada uno con una lógica de enrutamiento distinta. Elegir el tipo correcto define la arquitectura de tu sistema de mensajería.</p>
+
+            <h3>Direct Exchange</h3>
+            <p>Enruta mensajes a queues cuya <strong>binding key coincide exactamente</strong> con la routing key del
+              mensaje.</p>
+            <div class="arch">
+              <div class="at">Direct Exchange — coincidencia exacta</div>
+              <span class="h1">Producer</span> ──publish(routing_key="<span class="h2">error</span>")──▶ <span
+                class="h1">[Direct Exchange: logs]</span>
+              │
+              binding_key="<span class="h2">error</span>" ──────────▶ <span class="h3">[Queue: errores]</span> →
+              Consumer-A
+              binding_key="<span class="h4">info</span>" ──────────▶ <span class="h3">[Queue: info]</span> <span
+                class="dm">← no recibe este mensaje</span>
+              binding_key="<span class="h4">warn</span>" ──────────▶ <span class="h3">[Queue: warnings]</span><span
+                class="dm">← no recibe este mensaje</span>
+
+              <span class="dm">→ Solo la queue "errores" recibe el mensaje porque su binding_key = "error"</span>
+            </div>
+
+            <h3>Fanout Exchange</h3>
+            <p>Ignora la routing key. <strong>Difunde el mensaje a TODAS las queues vinculadas</strong>. Broadcast puro.
+            </p>
+            <div class="arch">
+              <div class="at">Fanout Exchange — broadcast</div>
+              <span class="h1">Producer</span> ──publish(routing_key ignorada)──▶ <span class="h1">[Fanout Exchange:
+                pedidos]</span>
+              │
+              ┌────────────────┼────────────────┐
+              ▼ ▼ ▼
+              <span class="h3">[Queue: inventario]</span> <span class="h3">[Queue: pagos]</span> <span
+                class="h3">[Queue: notificaciones]</span>
+              Consumer-A Consumer-B Consumer-C
+
+              <span class="dm">→ Los 3 consumers reciben el mismo mensaje simultáneamente</span>
+            </div>
+
+            <h3>Topic Exchange</h3>
+            <p>Enrutamiento con <strong>wildcards</strong> en la routing key. Usa puntos como separadores. El más
+              flexible.</p>
+            <div class="tw">
+              <table>
+                <tr>
+                  <th>Wildcard</th>
+                  <th>Significado</th>
+                  <th>Ejemplo</th>
+                </tr>
+                <tr>
+                  <td><code>*</code></td>
+                  <td>Exactamente una palabra</td>
+                  <td><code>orden.*</code> coincide con <code>orden.creada</code> pero NO con
+                    <code>orden.pago.procesado</code></td>
+                </tr>
+                <tr>
+                  <td><code>#</code></td>
+                  <td>Cero o más palabras</td>
+                  <td><code>orden.#</code> coincide con <code>orden.creada</code>, <code>orden.pago.procesado</code>,
+                    <code>orden</code></td>
+                </tr>
+              </table>
+            </div>
+            <div class="arch">
+              <div class="at">Topic Exchange — routing con wildcards</div>
+              Routing keys de mensajes:
+              "<span class="h2">orden.creada</span>", "<span class="h2">orden.pagada</span>", "<span
+                class="h2">orden.enviada</span>", "<span class="h4">usuario.registrado</span>"
+
+              <span class="h1">[Topic Exchange: eventos]</span>
+              binding "<span class="h2">orden.*</span>" → <span class="h3">[Queue: auditoria-ordenes]</span> recibe:
+              orden.creada, orden.pagada, orden.enviada
+              binding "<span class="h2">orden.creada</span>" → <span class="h3">[Queue: inventario]</span> recibe:
+              orden.creada (solo)
+              binding "<span class="h4">#</span>" → <span class="h3">[Queue: logs-global]</span> recibe: TODOS los
+              mensajes
+              binding "<span class="h4">usuario.*</span>" → <span class="h3">[Queue: bienvenida]</span> recibe:
+              usuario.registrado
+            </div>
+
+            <h3>Headers Exchange</h3>
+            <p>Ignora la routing key. Enruta basándose en los <strong>headers del mensaje</strong>. Usa
+              <code>x-match: all</code> (todos los headers deben coincidir) o <code>x-match: any</code> (cualquiera).
+            </p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">bash <span class="cf">headers exchange ejemplo</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Binding con headers
+# Queue "pagos-tarjeta" se activa si el mensaje tiene:
+# header "metodo_pago" = "tarjeta" AND "region" = "colombia"
+
+# x-match: all → TODOS los headers deben coincidir
+# x-match: any → AL MENOS UNO debe coincidir
+
+# Mensaje con headers: {metodo_pago: "tarjeta", region: "colombia"}
+# → Llega a "pagos-tarjeta" ✅
+
+# Mensaje con headers: {metodo_pago: "efectivo", region: "colombia"}
+# → NO llega a "pagos-tarjeta" ❌ (metodo_pago no coincide)</code></pre>
+            </div>
+
+            <h3>Default Exchange</h3>
+            <p>Exchange especial sin nombre (<code>""</code>). Todo queue creado tiene automáticamente un binding con el
+              Default Exchange, donde la routing key es el <strong>nombre de la queue</strong>.</p>
+            <div class="cl-box info">
+              <div class="cl-ico">💡</div>
+              <div class="cl-bd">Publicar a <code>exchange=""</code> con <code>routing_key="mi-queue"</code> equivale a
+                enviar directamente a la queue "mi-queue". Es el patrón más simple para empezar.</div>
+            </div>
+
+            <h3>Resumen de elección</h3>
+            <div class="tw">
+              <table>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Cuándo usar</th>
+                  <th>Ejemplo de uso</th>
+                </tr>
+                <tr>
+                  <td><span class="tg">Direct</span></td>
+                  <td>Enrutamiento a queues específicas por categoría exacta</td>
+                  <td>Niveles de log, tipos de tarea</td>
+                </tr>
+                <tr>
+                  <td><span class="tg y">Fanout</span></td>
+                  <td>Notificar a múltiples servicios el mismo evento</td>
+                  <td>Evento "orden creada" → inventario, pagos, notificaciones</td>
+                </tr>
+                <tr>
+                  <td><span class="tg b">Topic</span></td>
+                  <td>Enrutamiento flexible con jerarquías y wildcards</td>
+                  <td>Sistema de eventos multi-dominio</td>
+                </tr>
+                <tr>
+                  <td><span class="tg p">Headers</span></td>
+                  <td>Enrutamiento basado en metadata, sin routing key</td>
+                  <td>Enrutar por idioma, región, tipo de cliente</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <h4>🧠 Pregunta rápida</h4>
+            <p>Publicas un mensaje con <code>routing_key="pagos.tarjeta.colombia"</code>. ¿Cuál binding key de un Topic Exchange lo capturará?</p>
+            <div class="quiz-options">
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">A) <code>pagos.*</code></div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">B) <code>*.tarjeta.*</code></div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">C) <code>pagos.tarjeta</code></div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'correct')">D) <code>pagos.#</code></div>
+            </div>
+            <div class="quiz-result" data-wrong="❌ Incorrecto. La respuesta es <code>pagos.#</code> — el símbolo # representa cero o más palabras. <code>pagos.*</code> no funciona porque * es exactamente una palabra y 'tarjeta.colombia' son dos.">✅ Correcto. <code>pagos.#</code> coincide porque <code>#</code> representa cero o más palabras. <code>pagos.*</code> NO coincide porque <code>*</code> es exactamente una palabra, y "tarjeta.colombia" son dos.</div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nbtn prev" onclick="goTo(2)">← Arquitectura AMQP</button>
+            <button class="done-btn" id="done-3" onclick="markDone(3)">✓ Marcar visto</button>
+            <button class="nbtn next" onclick="goTo(4)">Queues y Bindings →</button>
+          </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 4 ═══════════════ -->
+        <div class="lesson" id="lesson-4">
+          <div class="lesson-hdr">
+            <div class="l-badge">4</div>
+            <div class="l-title">
+              <h2>Queues y Bindings</h2>
+              <p>Propiedades, tipos especiales y cómo conectar exchanges con queues</p>
+            </div>
+          </div>
+          <div class="lb">
+            <p>La <strong>queue</strong> es el almacén de mensajes: guarda los mensajes hasta que un consumidor los recoja. Los <strong>bindings</strong> son las reglas que conectan un exchange con una queue. Sin bindings, los mensajes que llegan al exchange no tienen a dónde ir y se pierden. Configurar bien estas dos piezas es esencial para que el sistema funcione como esperas.</p>
+
+            <h3>Propiedades de una Queue</h3>
+            <div class="tw">
+              <table>
+                <tr>
+                  <th>Propiedad</th>
+                  <th>Valores</th>
+                  <th>Descripción</th>
+                </tr>
+                <tr>
+                  <td><strong>Durable</strong></td>
+                  <td>true/false</td>
+                  <td>Si <code>true</code>, la queue sobrevive reinicios del broker. Los mensajes dentro también deben
+                    ser persistent.</td>
+                </tr>
+                <tr>
+                  <td><strong>Exclusive</strong></td>
+                  <td>true/false</td>
+                  <td>Solo puede usarla la conexión que la creó. Se elimina cuando esa conexión cierra. Ideal para
+                    queues temporales de respuesta.</td>
+                </tr>
+                <tr>
+                  <td><strong>Auto-delete</strong></td>
+                  <td>true/false</td>
+                  <td>Se elimina automáticamente cuando el último consumer se desconecta.</td>
+                </tr>
+                <tr>
+                  <td><strong>Arguments</strong></td>
+                  <td>map</td>
+                  <td>Argumentos adicionales: TTL, DLX, max-length, priority, etc.</td>
+                </tr>
+              </table>
+            </div>
+
+            <h3>Argumentos (x-arguments) importantes</h3>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">bash <span class="cf">declarar queue con argumentos</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Queue con TTL de mensajes (30 segundos)
+rabbitmqadmin declare queue \
+  name=pedidos-temporales \
+  durable=true \
+  arguments='{"x-message-ttl": 30000}'
+
+# Queue con máximo de mensajes (si se llena, descarta los más viejos)
+rabbitmqadmin declare queue \
+  name=metricas \
+  durable=true \
+  arguments='{"x-max-length": 10000, "x-overflow": "drop-head"}'
+
+# Queue con Dead Letter Exchange (para mensajes fallidos)
+rabbitmqadmin declare queue \
+  name=pedidos \
+  durable=true \
+  arguments='{"x-dead-letter-exchange": "dlx", "x-dead-letter-routing-key": "pedidos.failed"}'
+
+# Queue con prioridad (0-255, necesita x-max-priority)
+rabbitmqadmin declare queue \
+  name=tareas-prioritarias \
+  durable=true \
+  arguments='{"x-max-priority": 10}'
+
+# Queue con expiración (se elimina si no tiene consumers en N ms)
+rabbitmqadmin declare queue \
+  name=queue-temporal \
+  arguments='{"x-expires": 60000}'</code></pre>
+            </div>
+
+            <h3>Tipos de Queue (RabbitMQ 3.8+)</h3>
+            <div class="cg">
+              <div class="cc">
+                <div class="cc-ico">📋</div>
+                <h4>Classic Queue</h4>
+                <p>El tipo original. Rápida pero sin replicación automática entre nodos del cluster.</p>
+              </div>
+              <div class="cc">
+                <div class="cc-ico">🗳️</div>
+                <h4>Quorum Queue</h4>
+                <p>Replicada entre N nodos usando Raft. La recomendada para producción. Durabilidad garantizada.</p>
+              </div>
+              <div class="cc">
+                <div class="cc-ico">🌊</div>
+                <h4>Stream Queue</h4>
+                <p>Append-only log (similar a Kafka). Permite replay desde cualquier offset. Disponible en 3.9+.</p>
+              </div>
+            </div>
+
+            <div class="cl-box tip">
+              <div class="cl-ico">🏆</div>
+              <div class="cl-bd"><strong>Recomendación de producción:</strong> Usa <strong>Quorum Queues</strong> para
+                datos críticos (tolerancia a fallos automática) y <strong>Classic Queues</strong> para datos no críticos
+                donde el rendimiento importa más.</div>
+            </div>
+
+            <h3>Bindings</h3>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">bash <span class="cf">gestión de bindings</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Declarar binding: exchange → queue con routing_key
+rabbitmqadmin declare binding \
+  source=mi-exchange \
+  destination=mi-queue \
+  routing_key=mi-routing-key
+
+# Binding con Topic Exchange y wildcard
+rabbitmqadmin declare binding \
+  source=eventos \
+  destination=auditoria \
+  routing_key="orden.#"
+
+# Binding con Fanout (routing_key se ignora)
+rabbitmqadmin declare binding \
+  source=broadcast \
+  destination=servicio-a \
+  routing_key=""
+
+# Listar bindings
+rabbitmqadmin list bindings
+
+# Eliminar binding
+rabbitmqadmin delete binding \
+  source=mi-exchange \
+  destination=mi-queue \
+  properties_key=mi-routing-key</code></pre>
+            </div>
+
+            <h3>Exchange-to-Exchange Bindings</h3>
+            <p>RabbitMQ permite vincular exchanges entre sí, creando topologías de enrutamiento complejas:</p>
+            <div class="arch">
+              <div class="at">Exchange → Exchange → Queue</div>
+              <span class="h1">Producer</span> ──▶ <span class="h2">[Topic Exchange: eventos.globales]</span>
+              │ binding: "orden.*"
+              ▼
+              <span class="h2">[Fanout Exchange: eventos.ordenes]</span>
+              │ │ │
+              ▼ ▼ ▼
+              <span class="h3">[Q: inventario]</span> <span class="h3">[Q: pagos]</span> <span class="h3">[Q:
+                notificaciones]</span>
+
+              <span class="dm">→ Filtrar primero por Topic, luego broadcast via Fanout</span>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <h4>🧠 Pregunta rápida</h4>
+            <p>Creas una queue con <code>durable=true</code> pero publicas mensajes con <code>delivery_mode=1</code>. El broker se reinicia. ¿Qué ocurre?</p>
+            <div class="quiz-options">
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">A) Los mensajes sobreviven porque la queue es durable.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'correct')">B) Los mensajes se pierden porque no son persistent (delivery_mode=1).</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">C) La queue también se pierde porque los mensajes no eran persistent.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">D) El broker rechaza mensajes no persistent en queues durables.</div>
+            </div>
+            <div class="quiz-result" data-wrong="❌ Incorrecto. La queue sobrevive (es durable), pero los mensajes se pierden — delivery_mode=1 significa transient. Para que los mensajes sobrevivan al reinicio necesitas delivery_mode=2.">✅ Correcto. La durabilidad completa requiere AMBOS: queue durable=true Y mensaje con delivery_mode=2. La queue sobrevive vacía, pero sus mensajes se pierden al reiniciar.</div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nbtn prev" onclick="goTo(3)">← Exchanges</button>
+            <button class="done-btn" id="done-4" onclick="markDone(4)">✓ Marcar visto</button>
+            <button class="nbtn next" onclick="goTo(5)">Producers →</button>
+          </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 5 ═══════════════ -->
+        <div class="lesson" id="lesson-5">
+          <div class="lesson-hdr">
+            <div class="l-badge">5</div>
+            <div class="l-title">
+              <h2>Producers</h2>
+              <p>Publicar mensajes: confirmaciones, propiedades y mejores prácticas</p>
+            </div>
+          </div>
+          <div class="lb">
+            <div class="cl-box info">
+              <div class="cl-ico">📌</div>
+              <div class="cl-bd"><strong>Nota para juniors:</strong> Los ejemplos de código en Go de este módulo usan la librería <code>amqp091-go</code>. Si aún no tienes el proyecto configurado, no te preocupes — en el <strong>Módulo 11 (RabbitMQ con Go)</strong> se hace el setup completo. Por ahora, enfócate en entender los <em>conceptos</em> de publisher confirms, propiedades del mensaje y el patrón de publicación. El código completo lo ejecutarás en el módulo 11.</div>
+            </div>
+            <p>El <strong>producer</strong> es cualquier parte de tu aplicación que necesita enviar un mensaje. Para publicar de forma segura en producción hay que configurar dos cosas clave: las propiedades del mensaje (qué datos lleva, cómo de importante es) y los <strong>publisher confirms</strong> (para saber con certeza que el broker lo recibió).</p>
+
+            <h3>Publisher Confirms</h3>
+            <p>Por defecto, <code>basic.publish</code> es <strong>fire-and-forget</strong> — no sabes si el broker
+              recibió el mensaje. <strong>Publisher Confirms</strong> activa confirmaciones asíncronas del broker.</p>
+            <div class="arch">
+              <div class="at">Flujo de Publisher Confirms</div>
+              <span class="h1">Producer</span> <span class="h2">Broker</span>
+              │ 1. channel.Confirm() ──────────────────▶ │ Activa modo confirm
+              │ │
+              │ 2. Publish(msg #1) ──────────────────▶ │ Recibe y persiste
+              │ 3. Publish(msg #2) ──────────────────▶ │ Recibe y persiste
+              │ │
+              │ ◀──── basic.ack(deliveryTag=1) ─── │ Confirma msg #1
+              │ ◀──── basic.ack(deliveryTag=2) ─── │ Confirma msg #2
+              │ │
+              │ (si falla) ◀─── basic.nack(tag=N) ──────── │ Nack = reintentar
+            </div>
+
+            <h3>Propiedades del mensaje — profundidad</h3>
+            <p>Cada mensaje AMQP lleva dos partes: el <strong>cuerpo</strong> (<code>body</code>, tus datos) y las <strong>propiedades</strong>, que son metadatos estándar que van separados. Las propiedades describen el contenido (<code>ContentType</code>), controlan la durabilidad (<code>DeliveryMode</code>), habilitan el patrón RPC (<code>CorrelationId</code>, <code>ReplyTo</code>), añaden trazabilidad distribuida (<code>MessageId</code>, <code>AppId</code>, headers personalizados) y permiten definir expiración (<code>Expiration</code>). Usarlas correctamente marca la diferencia entre un sistema básico y uno listo para producción.</p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">go <span class="cf">publicar con propiedades completas</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">// Publicar mensaje con todas las propiedades relevantes
+err = ch.PublishWithContext(ctx,
+    "mi-exchange",          // exchange
+    "orden.creada",         // routing key
+    true,                   // mandatory: true = error si no hay queue destino
+    false,                  // immediate: deprecated en RabbitMQ 3.x, usar false
+    amqp.Publishing{
+        // Identificación
+        MessageId:     uuid.New().String(),
+        CorrelationId: req.CorrelationID,   // para RPC pattern
+        ReplyTo:       replyQueue,          // para RPC pattern
+
+        // Contenido
+        ContentType:   "application/json",
+        ContentEncoding: "utf-8",
+        Body:          jsonBytes,
+
+        // Durabilidad: 1=transient, 2=persistent
+        DeliveryMode: amqp.Persistent,
+
+        // Expiración (en ms, como string)
+        Expiration: "60000", // 1 minuto
+
+        // Prioridad (0-9 si la queue tiene x-max-priority)
+        Priority: 5,
+
+        // Headers personalizados
+        Headers: amqp.Table{
+            "source-service": "pedidos-service",
+            "version":        "1.0",
+            "trace-id":       traceID,
+        },
+
+        // Timestamp
+        Timestamp: time.Now(),
+        Type:      "orden.creada.v1",
+        AppId:     "pedidos-service",
+    },
+)</code></pre>
+            </div>
+
+            <h3>Patrón: Producer robusto con confirmaciones</h3>
+            <p>Las Publisher Confirms garantizan que el broker recibió y persistió el mensaje — pero su API es asíncrona. El patrón idiomático en Go es: activar <code>channel.Confirm(false)</code>, suscribirse al canal <code>NotifyPublish</code>, publicar el mensaje y luego bloquear con <code>select</code> esperando el ACK del broker. Si llega un NACK o el timeout expira, el producer puede decidir reintentar o registrar el error para inspección manual. Este patrón también debe suscribirse a <code>NotifyReturn</code> para capturar mensajes devueltos porque no encontraron queue de destino.</p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">go <span class="cf">producer con publisher confirms</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">type Producer struct {
+    conn    *amqp.Connection
+    channel *amqp.Channel
+    confirms chan amqp.Confirmation
+}
+
+func NewProducer(url string) (*Producer, error) {
+    conn, err := amqp.Dial(url)
+    if err != nil { return nil, fmt.Errorf("conectar RabbitMQ: %w", err) }
+
+    ch, err := conn.Channel()
+    if err != nil { return nil, err }
+
+    // Activar publisher confirms
+    if err = ch.Confirm(false); err != nil {
+        return nil, fmt.Errorf("activar confirms: %w", err)
+    }
+
+    // Canal para recibir confirmaciones (buffer 100)
+    confirms := ch.NotifyPublish(make(chan amqp.Confirmation, 100))
+
+    return &Producer{conn: conn, channel: ch, confirms: confirms}, nil
+}
+
+func (p *Producer) Publish(ctx context.Context, exchange, key string, body []byte) error {
+    err := p.channel.PublishWithContext(ctx, exchange, key, true, false,
+        amqp.Publishing{
+            ContentType:  "application/json",
+            Body:         body,
+            DeliveryMode: amqp.Persistent,
+            MessageId:    uuid.New().String(),
+            Timestamp:    time.Now(),
+        },
+    )
+    if err != nil { return fmt.Errorf("publicar: %w", err) }
+
+    // Esperar confirmación del broker con timeout
+    select {
+    case confirm := <-p.confirms:
+        if !confirm.Ack {
+            return fmt.Errorf("broker rechazó el mensaje (nack)")
+        }
+        return nil
+    case <-time.After(5 * time.Second):
+        return fmt.Errorf("timeout esperando confirmación del broker")
+    case <-ctx.Done():
+        return ctx.Err()
+    }
+}
+
+func (p *Producer) Close() {
+    p.channel.Close()
+    p.conn.Close()
+}</code></pre>
+            </div>
+
+            <div class="cl-box warn">
+              <div class="cl-ico">⚠️</div>
+              <div class="cl-bd"><strong>Mandatory flag:</strong> Si <code>mandatory=true</code> y el mensaje no llega a
+                ninguna queue (no hay binding), el broker devuelve el mensaje al producer via <code>NotifyReturn</code>.
+                Siempre suscríbete a este canal para detectar mensajes perdidos.</div>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <h4>🧠 Pregunta rápida</h4>
+            <p>Sin Publisher Confirms activados, ¿qué garantía tienes de que tu mensaje llegó al broker?</p>
+            <div class="quiz-options">
+              <div class="quiz-opt" onclick="checkQuiz(this,'correct')">A) Ninguna — es fire-and-forget. Si hay un error de red no lo sabrás.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">B) El broker siempre confirma por TCP que el paquete llegó.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">C) La librería cliente reintenta automáticamente si no hay ACK en 5s.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">D) El broker envía un HTTP 200 si el mensaje fue aceptado.</div>
+            </div>
+            <div class="quiz-result" data-wrong="❌ Incorrecto. Sin Publisher Confirms, basic.publish es fire-and-forget — no tienes ninguna garantía. Activa las confirmaciones con channel.Confirm(false).">✅ Correcto. Sin Publisher Confirms, basic.publish no tiene respuesta del broker a nivel de aplicación. Solo activas esta garantía con <code>channel.Confirm(false)</code>.</div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nbtn prev" onclick="goTo(4)">← Queues</button>
+            <button class="done-btn" id="done-5" onclick="markDone(5)">✓ Marcar visto</button>
+            <button class="nbtn next" onclick="goTo(6)">Consumers →</button>
+          </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 6 ═══════════════ -->
+        <div class="lesson" id="lesson-6">
+          <div class="lesson-hdr">
+            <div class="l-badge">6</div>
+            <div class="l-title">
+              <h2>Consumers</h2>
+              <p>Suscripción, prefetch, push vs pull y patrones de consumo</p>
+            </div>
+          </div>
+          <div class="lb">
+            <p>El <strong>consumer</strong> es quien recibe los mensajes de una queue y los procesa. Configurarlo bien es fundamental: un consumer mal configurado puede sobrecargar tu aplicación, procesar mensajes en orden incorrecto o, lo más crítico, perder mensajes si el procesamiento falla antes de confirmar la recepción.</p>
+
+            <h3>Push vs Pull</h3>
+            <div class="cmp">
+              <div class="cmp-box hi">
+                <h5>Push — basic.consume ✅ Recomendado</h5>
+                <ul style="font-size:.82rem;color:var(--tx2);padding-left:16px">
+                  <li>El broker empuja mensajes al consumer</li>
+                  <li>Alta eficiencia y baja latencia</li>
+                  <li>Consumer permanece suscrito</li>
+                  <li>El broker controla el flujo con prefetch</li>
+                  <li>Ideal para la mayoría de casos</li>
+                </ul>
+              </div>
+              <div class="cmp-box">
+                <h5>Pull — basic.get ⚠️ Usar con cuidado</h5>
+                <ul style="font-size:.82rem;color:var(--tx2);padding-left:16px">
+                  <li>Consumer pide mensajes explícitamente</li>
+                  <li>Polling = ineficiente si la queue está vacía</li>
+                  <li>Útil para procesar 1 mensaje a la vez</li>
+                  <li>No recomendado para alto throughput</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3>Prefetch Count — Control de flujo</h3>
+            <p>El <code>prefetch_count</code> limita cuántos mensajes sin ACK puede tener un consumer simultáneamente.
+              <strong>Es la configuración más importante para el rendimiento y equidad.</strong></p>
+            <div class="arch">
+              <div class="at">Sin prefetch (prefetch=0, sin límite) — ¡PROBLEMA!</div>
+              Queue: [msg1, msg2, ..., msg1000]
+
+              <span class="h2">Consumer-A</span> (rápido) ← recibe 900 mensajes de golpe
+              <span class="h3">Consumer-B</span> (lento) ← recibe 100 mensajes
+              <span class="dm">→ Consumer-B sobrecargado, Consumer-A ocioso. Desequilibrado.</span>
+
+              <div class="at" style="margin-top:16px">Con prefetch=1 — distribución equitativa</div>
+              Queue: [msg1, msg2, msg3, msg4, msg5...]
+
+              <span class="h2">Consumer-A</span> procesa msg1 → ACK → recibe msg3 → ACK → recibe msg5...
+              <span class="h3">Consumer-B</span> procesa msg2 → ACK → recibe msg4 → ACK → recibe msg6...
+              <span class="dm">→ Cada consumer recibe el siguiente mensaje solo cuando termina el anterior</span>
+            </div>
+
+            <div class="cl-box info">
+              <div class="cl-ico">📐</div>
+              <div class="cl-bd"><strong>Guía de prefetch:</strong> <code>prefetch=1</code> para tareas pesadas (máxima
+                equidad). <code>prefetch=10-50</code> para tareas ligeras (mayor throughput). Nunca
+                <code>prefetch=0</code> en producción.</div>
+            </div>
+
+            <h3>Consumer Tags y Cancelación</h3>
+            <p>El <strong>consumer tag</strong> es un identificador único dentro del canal que permite cancelar un consumer específico con <code>basic.cancel</code> sin cerrar el canal ni afectar a otros consumers activos. Al llamar a <code>ch.Consume</code> recibes un canal Go <code>&lt;-chan amqp.Delivery</code> que entrega los mensajes de forma concurrente. El loop con <code>select</code> sobre ese canal y <code>ctx.Done()</code> es el patrón estándar para consumo cancelable con context: cuando el context se cancela (por shutdown o timeout), el consumer termina limpiamente.</p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">go <span class="cf">consumer básico con prefetch</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">func (c *Consumer) Start(ctx context.Context) error {
+    // Configurar prefetch ANTES de consumir
+    if err := c.ch.Qos(
+        10,    // prefetch_count: máx mensajes sin ACK
+        0,     // prefetch_size: 0 = sin límite por tamaño
+        false, // global: false = por consumer, true = por canal
+    ); err != nil {
+        return fmt.Errorf("configurar QoS: %w", err)
+    }
+
+    // Suscribirse a la queue (modo push)
+    msgs, err := c.ch.Consume(
+        "mi-queue",        // queue
+        "worker-1",        // consumer tag (identificador único)
+        false,             // auto-ack: FALSE = manual (recomendado)
+        false,             // exclusive: solo este consumer en la queue
+        false,             // no-local: ignorar mensajes del mismo conn
+        false,             // no-wait: false = esperar confirmación
+        nil,               // args adicionales
+    )
+    if err != nil { return fmt.Errorf("consumir: %w", err) }
+
+    log.Println("Consumer iniciado, esperando mensajes...")
+
+    for {
+        select {
+        case msg, ok := <-msgs:
+            if !ok {
+                return fmt.Errorf("canal cerrado inesperadamente")
+            }
+            if err := c.handleMessage(ctx, msg); err != nil {
+                log.Printf("error procesando msg: %v", err)
+                // NACK sin requeue → va a DLQ
+                msg.Nack(false, false)
+                continue
+            }
+            // ACK solo si el procesamiento fue exitoso
+            msg.Ack(false) // false = solo este mensaje (no multiple)
+        case <-ctx.Done():
+            return nil
+        }
+    }
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <h4>🧠 Pregunta rápida</h4>
+            <p>Tienes 3 workers consumiendo una queue. Los mensajes tienen procesamiento variable. Configuras <code>prefetch=1</code>. ¿Qué efecto tiene?</p>
+            <div class="quiz-options">
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">A) Solo un worker puede consumir a la vez, los otros esperan.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'correct')">B) Cada worker recibe el siguiente mensaje solo cuando termina el actual, garantizando distribución equitativa.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">C) Los mensajes se distribuyen en round-robin ignorando la velocidad de los workers.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">D) Solo se puede publicar 1 mensaje a la vez al exchange.</div>
+            </div>
+            <div class="quiz-result" data-wrong="❌ Incorrecto. prefetch=1 no bloquea a los otros workers — todos consumen en paralelo. Simplemente cada worker pide el siguiente mensaje solo al hacer ACK del actual.">✅ Correcto. Con prefetch=1, los workers más rápidos consumen más mensajes porque piden el siguiente en cuanto hacen ACK. Distribución justa y eficiente.</div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nbtn prev" onclick="goTo(5)">← Producers</button>
+            <button class="done-btn" id="done-6" onclick="markDone(6)">✓ Marcar visto</button>
+            <button class="nbtn next" onclick="goTo(7)">Acknowledgements →</button>
+          </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 7 ═══════════════ -->
+        <div class="lesson" id="lesson-7">
+          <div class="lesson-hdr">
+            <div class="l-badge">7</div>
+            <div class="l-title">
+              <h2>Acknowledgements y Durabilidad</h2>
+              <p>Garantías de entrega, ACK, NACK, Reject y persistencia de mensajes</p>
+            </div>
+          </div>
+          <div class="lb">
+            <p>El sistema de <strong>acknowledgements</strong> (confirmaciones) de RabbitMQ es lo que garantiza que ningún mensaje se pierda. El principio es sencillo: el broker considera que un mensaje sigue pendiente hasta que el consumer le confirma con un ACK que lo procesó correctamente. Si el consumer falla antes de confirmar, el broker lo reenvía automáticamente.</p>
+
+            <h3>Tipos de ACK</h3>
+            <div class="tw">
+              <table>
+                <tr>
+                  <th>Operación</th>
+                  <th>Efecto</th>
+                  <th>Cuándo usar</th>
+                </tr>
+                <tr>
+                  <td><code>Ack(multiple=false)</code></td>
+                  <td>Confirma exactamente este mensaje. Broker lo elimina.</td>
+                  <td>Procesamiento exitoso normal.</td>
+                </tr>
+                <tr>
+                  <td><code>Ack(multiple=true)</code></td>
+                  <td>Confirma este y todos los mensajes anteriores en el canal.</td>
+                  <td>Procesamiento en batch para mayor throughput.</td>
+                </tr>
+                <tr>
+                  <td><code>Nack(multiple, requeue=true)</code></td>
+                  <td>Rechaza el mensaje y lo <strong>reencola</strong> al frente.</td>
+                  <td>Error temporal (DB no disponible, timeout).</td>
+                </tr>
+                <tr>
+                  <td><code>Nack(multiple, requeue=false)</code></td>
+                  <td>Rechaza el mensaje y lo <strong>descarta</strong> (o va a DLX).</td>
+                  <td>Error permanente (JSON inválido, regla de negocio).</td>
+                </tr>
+                <tr>
+                  <td><code>Reject(requeue=true)</code></td>
+                  <td>Igual que Nack pero para un solo mensaje.</td>
+                  <td>Mismo que Nack individual.</td>
+                </tr>
+                <tr>
+                  <td><code>Reject(requeue=false)</code></td>
+                  <td>Descarta un mensaje individual.</td>
+                  <td>Mensaje imposible de procesar.</td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="cl-box danger">
+              <div class="cl-ico">🚨</div>
+              <div class="cl-bd"><strong>Infinite loop de NACK:</strong> Si haces <code>Nack(requeue=true)</code> en un
+                error permanente, el mensaje vuelve a la queue y el mismo consumer lo vuelve a fallar infinitamente. Usa
+                <code>requeue=false</code> para errores permanentes y configura un DLX para capturarlos.</div>
+            </div>
+
+            <h3>Estados de un mensaje</h3>
+            <div class="arch">
+              <div class="at">Ciclo de vida del mensaje en el consumer</div>
+              Queue: [msg]
+              │
+              ▼ (broker entrega al consumer)
+              <span class="h2">Estado: unacked</span> ← el mensaje existe en broker Y en consumer
+              │
+              ├── <span class="h1">Ack()</span> → <span class="h3">eliminado del broker</span> ✅ éxito
+              │
+              ├── <span class="re">Nack(requeue=true)</span> → <span class="h2">vuelve a la queue</span> ↩️ reintentar
+              │
+              ├── <span class="re">Nack(requeue=false)</span> → <span class="re">descartado / va a DLX</span> 🗑️ error
+              permanente
+              │
+              └── <span class="dm">consumer se desconecta</span> → <span class="h2">vuelve a la queue
+                automáticamente</span> ↩️ redelivered=true
+            </div>
+
+            <h3>Durabilidad completa — checklist</h3>
+            <ol class="steps">
+              <li>Exchange declarado con <code>durable=true</code></li>
+              <li>Queue declarada con <code>durable=true</code></li>
+              <li>Mensaje publicado con <code>delivery_mode=2</code> (persistent)</li>
+              <li>Publisher Confirms activados (<code>channel.Confirm(false)</code>)</li>
+              <li>Consumer con <code>auto-ack=false</code> (ACK manual)</li>
+            </ol>
+
+            <h3>Manejo de redeliveries</h3>
+            <p>Cuando un consumer se desconecta sin hacer ACK o hace <code>Nack(requeue=true)</code>, el broker reenvía el mensaje con el flag <code>Redelivered=true</code>. Esto puede provocar <strong>procesamiento duplicado</strong> si no se maneja. Existen dos estrategias: <strong>idempotencia</strong> (diseñar la operación para que ejecutarla varias veces produzca el mismo resultado) y <strong>deduplicación activa</strong> (guardar los <code>MessageId</code> ya procesados y hacer ACK sin reprocesar si ya fue visto). El campo <code>x-retry-count</code> en los headers es un mecanismo manual para limitar reintentos antes de enviar definitivamente a la DLQ.</p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">go <span class="cf">detectar y manejar mensajes reenviados</span></div><button
+                  class="cpbtn" onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">func handleMessage(msg amqp.Delivery) error {
+    // Detectar si es un reenvío (ya fue entregado antes)
+    if msg.Redelivered {
+        log.Printf("⚠️  Mensaje reenviado: %s", msg.MessageId)
+        // Estrategia 1: procesar de todas formas (idempotencia)
+        // Estrategia 2: limitar reintentos con headers
+    }
+
+    // Contar reintentos con headers personalizados
+    retryCount := 0
+    if v, ok := msg.Headers["x-retry-count"]; ok {
+        retryCount = int(v.(int32))
+    }
+
+    if retryCount >= 3 {
+        log.Printf("❌ Máximo de reintentos alcanzado para: %s", msg.MessageId)
+        return msg.Nack(false, false) // → DLX
+    }
+
+    if err := procesarNegocio(msg.Body); err != nil {
+        // Republicar con contador incrementado
+        return republishWithRetry(msg, retryCount+1)
+    }
+    return msg.Ack(false)
+}
+
+// Idempotencia: usar message_id para detectar duplicados
+var processedIDs sync.Map
+
+func processIdempotent(msg amqp.Delivery) error {
+    if _, loaded := processedIDs.LoadOrStore(msg.MessageId, true); loaded {
+        log.Printf("Duplicado ignorado: %s", msg.MessageId)
+        return msg.Ack(false) // ACK igual para eliminar de la queue
+    }
+    return procesarNegocio(msg.Body)
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <h4>🧠 Pregunta rápida</h4>
+            <p>Para garantizar que los mensajes NO se pierdan si el broker RabbitMQ se reinicia, ¿qué combinación es necesaria?</p>
+            <div class="quiz-options">
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">A) Solo la queue debe ser durable=true.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">B) Solo el mensaje debe tener delivery_mode=2.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'correct')">C) Ambos: queue durable=true Y mensaje delivery_mode=2 (persistent).</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">D) Configurar auto-ack=false en el consumer.</div>
+            </div>
+            <div class="quiz-result" data-wrong="❌ Incorrecto. Para durabilidad completa necesitas AMBOS: queue durable=true Y mensaje delivery_mode=2. Con solo uno de los dos, los mensajes se pierden al reiniciar el broker.">✅ Correcto. Son dos requisitos independientes: la queue debe existir después del reinicio (durable) y los mensajes deben estar escritos en disco (delivery_mode=2). Si falta cualquiera, los mensajes se pierden.</div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nbtn prev" onclick="goTo(6)">← Consumers</button>
+            <button class="done-btn" id="done-7" onclick="markDone(7)">✓ Marcar visto</button>
+            <button class="nbtn next" onclick="goTo(8)">Patrones →</button>
+          </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 8 ═══════════════ -->
+        <div class="lesson" id="lesson-8">
+          <div class="lesson-hdr">
+            <div class="l-badge">8</div>
+            <div class="l-title">
+              <h2>Patrones de Mensajería</h2>
+              <p>Work Queues, Pub/Sub, Routing, RPC y Competing Consumers</p>
+            </div>
+          </div>
+          <div class="lb">
+            <p>Con los componentes básicos aprendidos, es momento de ver cómo combinarlos en <strong>patrones</strong> que resuelven problemas reales de arquitectura. Cada patrón responde a una pregunta diferente: ¿cómo reparto trabajo entre varios workers? ¿cómo notifico a varios servicios del mismo evento? ¿cómo implemento llamadas con respuesta sobre mensajería asíncrona?</p>
+
+            <h3>Work Queue (Task Queue)</h3>
+            <p>Distribuye tareas pesadas entre múltiples workers. El broker balancea la carga automáticamente.</p>
+            <div class="arch">
+              <span class="h1">Producer</span> ──▶ <span class="h2">[Default Exchange]</span> ──▶ <span
+                class="h2">[Queue: tareas]</span>
+              │
+              ┌───────────────────────┤
+              ▼ ▼
+              <span class="h3">[Worker-1]</span> <span class="h3">[Worker-2]</span>
+              (procesa task-1) (procesa task-2)
+
+              <span class="dm">Con prefetch=1: distribución equitativa automática</span>
+            </div>
+
+            <h3>Publish/Subscribe (Pub/Sub)</h3>
+            <p>Un evento notifica simultáneamente a múltiples servicios independientes.</p>
+            <div class="arch">
+              <span class="h1">Producer</span> ──▶ <span class="h2">[Fanout Exchange: orden.eventos]</span>
+              │
+              ┌───────────────────┼────────────────────┐
+              ▼ ▼ ▼
+              <span class="h3">[Q: inventario]</span> <span class="h3">[Q: facturacion]</span> <span class="h3">[Q:
+                notificacion]</span>
+              <span class="dm">(reduce stock)</span> <span class="dm">(genera factura)</span> <span class="dm">(envía
+                email)</span>
+
+              <span class="dm">Cada servicio tiene su propia queue — procesamiento independiente</span>
+            </div>
+
+            <h3>Routing (Direct Exchange)</h3>
+            <div class="arch">
+              <span class="h1">Producer</span> ──error──▶ <span class="h2">[Direct Exchange: logs]</span> ──error──▶
+              <span class="h3">[Q: alertas-criticas]</span>
+              ──info───▶ ──info───▶ <span class="h3">[Q: logs-generales]</span>
+              ──warning▶ ──warning▶ <span class="h3">[Q: logs-generales]</span>
+
+              <span class="dm">alertas-criticas: solo bindings "error"</span>
+              <span class="dm">logs-generales: bindings "info", "warning"</span>
+            </div>
+
+            <h3>RPC (Remote Procedure Call)</h3>
+            <p>Llamadas síncronas sobre mensajería asíncrona. Útil para obtener respuestas de servicios.</p>
+            <div class="arch">
+              <span class="h1">Client (Producer+Consumer)</span> <span class="h3">Server (Consumer+Producer)</span>
+
+              1. Crea queue temporal: <span class="h2">reply_to="amq.gen-XYZ"</span>
+              2. Publica request:
+              exchange=""
+              routing_key="<span class="h2">rpc-calcular</span>"
+              reply_to="<span class="h2">amq.gen-XYZ</span>"
+              correlation_id="<span class="h4">abc-123</span>"
+              ──────────────────────▶
+              3. Procesa request
+              4. Publica response:
+              routing_key="<span class="h2">amq.gen-XYZ</span>"
+              correlation_id="<span class="h4">abc-123</span>"
+              ◀──────────────────────
+              5. Recibe respuesta
+              6. Verifica correlation_id="<span class="h4">abc-123</span>" ✅
+            </div>
+
+            <h3>Competing Consumers (escalado)</h3>
+            <p>En este patrón todos los workers consumen de la <strong>misma queue</strong> — el broker distribuye los mensajes entre ellos automáticamente. Es diferente al Pub/Sub donde cada suscriptor tiene su propia queue. El escalado es horizontal: agregas más workers sin modificar el producer ni la topología de exchanges y queues. Con <code>prefetch=1</code>, la distribución es equitativa aunque los workers procesen a velocidades distintas. Cada worker necesita su propio <code>Channel</code>, pero todos comparten la misma <code>Connection</code>.</p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">go <span class="cf">múltiples consumers compitiendo</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">// Lanzar N workers compitiendo por la misma queue
+func StartWorkerPool(ctx context.Context, conn *amqp.Connection, n int) {
+    var wg sync.WaitGroup
+    for i := 0; i < n; i++ {
+        wg.Add(1)
+        go func(workerID int) {
+            defer wg.Done()
+            // Cada worker necesita su propio channel
+            ch, _ := conn.Channel()
+            defer ch.Close()
+            ch.Qos(1, 0, false) // prefetch=1 por worker
+
+            msgs, _ := ch.Consume("tareas", fmt.Sprintf("worker-%d", workerID),
+                false, false, false, false, nil)
+
+            for {
+                select {
+                case msg, ok := <-msgs:
+                    if !ok { return }
+                    log.Printf("[Worker-%d] procesando %s", workerID, msg.MessageId)
+                    if err := procesarTarea(msg.Body); err != nil {
+                        msg.Nack(false, false) // DLQ
+                    } else {
+                        msg.Ack(false)
+                    }
+                case <-ctx.Done():
+                    return
+                }
+            }
+        }(i)
+    }
+    wg.Wait()
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <h4>🧠 Pregunta rápida</h4>
+            <p>En el patrón Pub/Sub, ¿por qué cada suscriptor debe tener su propia queue en lugar de compartir una?</p>
+            <div class="quiz-options">
+              <div class="quiz-opt" onclick="checkQuiz(this,'correct')">A) Si comparten queue, solo uno de los suscriptores recibirá cada mensaje (competing consumers). Cada uno necesita su copia.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">B) Por razones de seguridad — compartir queues crea vulnerabilidades.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">C) RabbitMQ no permite que dos consumers lean de la misma queue.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">D) Porque el Fanout Exchange solo puede vincularse a una queue.</div>
+            </div>
+            <div class="quiz-result" data-wrong="❌ Incorrecto. Si comparten queue, funcionarán como Competing Consumers — solo uno recibirá cada mensaje. Para Pub/Sub real, cada suscriptor necesita su propia queue vinculada al mismo Fanout Exchange.">✅ Correcto. Si inventario y facturación comparten una queue, solo uno procesaría cada mensaje. Para que AMBOS procesen CADA mensaje, cada servicio necesita su propia queue vinculada al mismo Fanout Exchange.</div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nbtn prev" onclick="goTo(7)">← Acknowledgements</button>
+            <button class="done-btn" id="done-8" onclick="markDone(8)">✓ Marcar visto</button>
+            <button class="nbtn next" onclick="goTo(9)">Dead Letter Queues →</button>
+          </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 9 ═══════════════ -->
+        <div class="lesson" id="lesson-9">
+          <div class="lesson-hdr">
+            <div class="l-badge">9</div>
+            <div class="l-title">
+              <h2>Dead Letter Queues</h2>
+              <p>DLX, TTL, retry con backoff y manejo de mensajes fallidos</p>
+            </div>
+          </div>
+          <div class="lb">
+            <p>En cualquier sistema de mensajería hay mensajes que fallan: el servicio externo no responde, el JSON llega malformado, o hay un bug en la lógica de negocio. Sin una estrategia para manejar estos fallos, los mensajes simplemente desaparecen. La <strong>Dead Letter Queue</strong> es la red de seguridad: captura esos mensajes para que puedas inspeccionarlos y reprocesarlos sin perderlos.</p>
+
+            <h3>¿Cuándo un mensaje se convierte en "dead letter"?</h3>
+            <ul>
+              <li>El consumer hace <code>Nack(requeue=false)</code> o <code>Reject(requeue=false)</code></li>
+              <li>El mensaje expira por TTL (<code>x-message-ttl</code>)</li>
+              <li>La queue alcanza su límite máximo (<code>x-max-length</code>) y se descarta el más viejo</li>
+            </ul>
+
+            <h3>Configuración DLX</h3>
+            <p>Configurar un Dead Letter Exchange requiere declarar <strong>cuatro componentes</strong> en orden: el exchange DLX (normalmente <code>direct</code>), la queue que recibirá los mensajes fallidos (la DLQ), el binding entre ambos, y finalmente tu queue principal con el argumento <code>x-dead-letter-exchange</code> apuntando al DLX. Cuando un mensaje muere en la queue principal (por NACK, TTL expirado o max-length superado), RabbitMQ lo re-publica automáticamente al DLX usando la routing key definida en <code>x-dead-letter-routing-key</code>, y desde ahí llega a la DLQ para inspección o reprocesamiento manual.</p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">go <span class="cf">configurar DLX completo</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">func setupDLX(ch *amqp.Channel) error {
+    // 1. Declarar el Dead Letter Exchange
+    err := ch.ExchangeDeclare("dlx", "direct", true, false, false, false, nil)
+    if err != nil { return err }
+
+    // 2. Declarar la Dead Letter Queue (donde van los mensajes fallidos)
+    _, err = ch.QueueDeclare("pedidos.dlq", true, false, false, false,
+        amqp.Table{
+            "x-message-ttl": int64(86400000), // mensajes en DLQ expiran en 24h
+        },
+    )
+    if err != nil { return err }
+
+    // 3. Binding: DLX → DLQ
+    err = ch.QueueBind("pedidos.dlq", "pedidos.failed", "dlx", false, nil)
+    if err != nil { return err }
+
+    // 4. Declarar la queue PRINCIPAL con referencia al DLX
+    _, err = ch.QueueDeclare("pedidos", true, false, false, false,
+        amqp.Table{
+            "x-dead-letter-exchange":    "dlx",
+            "x-dead-letter-routing-key": "pedidos.failed",
+            // opcional: TTL de mensajes en cola principal
+            "x-message-ttl": int64(300000), // 5 minutos
+        },
+    )
+    return err
+}
+
+// Flujo: mensaje fallido en "pedidos" → DLX "dlx" → "pedidos.dlq"
+// El mensaje en la DLQ incluye headers x-death con causa y historial</code></pre>
+            </div>
+
+            <h3>Patrón Retry con Backoff Exponencial</h3>
+            <div class="arch">
+              <div class="at">Retry Pattern con TTL + DLX</div>
+              <span class="h1">Producer</span> ──▶ <span class="h2">[Queue: pedidos]</span>
+              │
+              Consumer falla │ Nack(requeue=false)
+              ▼
+              <span class="re">[DLX: dlx.retry]</span>
+              │
+              ▼
+              <span class="h2">[Queue: pedidos.retry.30s]</span> x-message-ttl=30000
+              <span class="dm">(espera 30 segundos)</span>
+              │ mensaje expira →
+              ▼
+              <span class="h2">[DLX → Queue: pedidos]</span> (vuelve a intentar)
+              │
+              Si falla 3 veces:
+              ▼
+              <span class="re">[Queue: pedidos.dlq]</span> (análisis manual)
+            </div>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">go <span class="cf">retry con conteo de intentos</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">const maxRetries = 3
+
+func processWithRetry(msg amqp.Delivery, producer *Producer) error {
+    // Extraer conteo de muertes del header x-death
+    retryCount := getDeathCount(msg.Headers)
+
+    if retryCount >= maxRetries {
+        log.Printf("❌ Agotados reintentos para %s", msg.MessageId)
+        return msg.Nack(false, false) // Va a DLQ final
+    }
+
+    if err := procesarNegocio(msg.Body); err != nil {
+        delay := time.Duration(30*(retryCount+1)) * time.Second
+        log.Printf("⚠️  Fallo #%d, reintento en %v", retryCount+1, delay)
+        return msg.Nack(false, false) // Va a queue de retry con TTL
+    }
+    return msg.Ack(false)
+}
+
+func getDeathCount(headers amqp.Table) int {
+    xDeath, ok := headers["x-death"]
+    if !ok { return 0 }
+    deaths, ok := xDeath.([]interface{})
+    if !ok || len(deaths) == 0 { return 0 }
+    death := deaths[0].(amqp.Table)
+    count, _ := death["count"].(int64)
+    return int(count)
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <h4>🧠 Pregunta rápida</h4>
+            <p>¿Cuál es la ventaja del patrón “retry via TTL + DLX” sobre simplemente hacer Nack(requeue=true) inmediatamente?</p>
+            <div class="quiz-options">
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">A) El mensaje se procesa más rápido al volver inmediatamente.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'correct')">B) Introduce un delay entre reintentos (backoff), evitando saturar el servicio fallido.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">C) Garantiza que el mensaje se procese exactly-once.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">D) Permite que múltiples consumers procesen el mismo mensaje.</div>
+            </div>
+            <div class="quiz-result" data-wrong="❌ Incorrecto. La ventaja es el delay/backoff: Nack(requeue=true) inmediato crea un busy-loop que satura el broker y el servicio fallido. El patrón TTL+DLX introduce tiempo de espera entre reintentos.">✅ Correcto. Nack(requeue=true) inmediato crea un busy-loop: el mensaje falla, vuelve, falla de nuevo miles de veces por segundo. El delay via TTL da tiempo para que el sistema externo se recupere.</div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nbtn prev" onclick="goTo(8)">← Patrones</button>
+            <button class="done-btn" id="done-9" onclick="markDone(9)">✓ Marcar visto</button>
+            <button class="nbtn next" onclick="goTo(11)">RabbitMQ con Go →</button>
+          </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 10 ═══════════════ -->
+        <div class="lesson" id="lesson-10">
+          <div class="lesson-hdr">
+            <div class="l-badge">10</div>
+            <div class="l-title">
+              <h2>RabbitMQ con Docker</h2>
+              <p>Tu entorno de desarrollo: levanta RabbitMQ en minutos y empieza a practicar</p>
+            </div>
+          </div>
+          <div class="lb">
+            <div class="cl-box tip">
+              <div class="cl-ico">🚀</div>
+              <div class="cl-bd"><strong>Primer paso práctico:</strong> Antes de estudiar la teoría de AMQP, exchanges y queues, necesitas tener RabbitMQ corriendo para poder practicar. Copia el <code>docker-compose.yml</code> de abajo, ejecútalo y abre la Management UI en <code>http://localhost:15672</code>. A partir del siguiente módulo tendrás el entorno listo para experimentar con cada concepto.</div>
+            </div>
+            <h3>docker-compose.yml completo</h3>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">yaml <span class="cf">docker-compose.yml</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-yaml">version: '3.9'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq
+    hostname: rabbitmq-dev         # importante para persistencia
+    ports:
+      - "5672:5672"    # AMQP (conexiones de aplicaciones)
+      - "15672:15672"  # Management UI (navegador)
+      - "15692:15692"  # Prometheus metrics (opcional)
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+      RABBITMQ_DEFAULT_VHOST: /
+      # Habilitar plugins
+      RABBITMQ_ENABLED_PLUGINS_FILE: /etc/rabbitmq/enabled_plugins
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./config/enabled_plugins:/etc/rabbitmq/enabled_plugins
+      - ./config/definitions.json:/etc/rabbitmq/definitions.json
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  rabbitmq-data:</code></pre>
+            </div>
+
+            <h3>Archivos de configuración</h3>
+            <p>Además del <code>docker-compose.yml</code>, puedes montar dos archivos que RabbitMQ carga al arrancar. <code>enabled_plugins</code> lista los plugins a activar en formato Erlang. <code>rabbitmq.conf</code> centraliza los parámetros del broker: heartbeat, límites de memoria y disco libre, nivel de logs y ajustes de persistencia. Para desarrollo local son opcionales; en producción son imprescindibles para tunear el comportamiento según la carga.</p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">bash <span class="cf">config/enabled_plugins</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash">[rabbitmq_management,rabbitmq_prometheus,rabbitmq_shovel,rabbitmq_shovel_management].</code></pre>
+            </div>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">bash <span class="cf">config/rabbitmq.conf</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Conexiones
+listeners.tcp.default = 5672
+management.tcp.port = 15672
+
+# Heartbeat (detectar conexiones muertas)
+heartbeat = 60
+
+# Límites de recursos
+vm_memory_high_watermark.relative = 0.7   # 70% de RAM disponible
+disk_free_limit.relative = 1.5            # 1.5x RAM como mínimo en disco
+
+# Logs
+log.console = true
+log.console.level = info
+
+# Confirmaciones persistentes
+queue_index_embed_msgs_below = 4096       # mensajes < 4KB van al índice</code></pre>
+            </div>
+
+            <h3>Comandos esenciales</h3>
+            <p>RabbitMQ expone dos herramientas CLI. <strong><code>rabbitmqctl</code></strong> gestiona el estado del nodo: usuarios, vhosts, cluster y diagnóstico. <strong><code>rabbitmqadmin</code></strong> opera la topología AMQP: exchanges, queues, bindings, y puede publicar o consumir mensajes de prueba directamente desde la terminal. Desde Docker, ambas se ejecutan dentro del contenedor con <code>docker exec</code>.</p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">bash <span class="cf">comandos rabbitmqadmin y rabbitmqctl</span></div><button
+                  class="cpbtn" onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Iniciar stack
+docker-compose up -d
+
+# Acceder a la Management UI: http://localhost:15672
+# Usuario: admin / Password: admin123
+
+# Ejecutar comandos dentro del contenedor
+docker exec -it rabbitmq rabbitmqctl status
+docker exec -it rabbitmq rabbitmqctl list_queues name messages consumers
+docker exec -it rabbitmq rabbitmqctl list_exchanges name type durable
+docker exec -it rabbitmq rabbitmqctl list_bindings
+
+# Crear usuario y vhost
+docker exec rabbitmq rabbitmqctl add_user app-user secret123
+docker exec rabbitmq rabbitmqctl set_user_tags app-user monitoring
+docker exec rabbitmq rabbitmqctl add_vhost /miapp
+docker exec rabbitmq rabbitmqctl set_permissions -p /miapp app-user ".*" ".*" ".*"
+
+# Publicar y consumir desde CLI (debugging)
+docker exec -it rabbitmq rabbitmqadmin publish \
+  exchange=amq.default routing_key=mi-queue \
+  payload='{"prueba": true}'
+
+docker exec -it rabbitmq rabbitmqadmin get queue=mi-queue ackmode=ack_requeue_false
+
+# Exportar/importar definiciones (topología completa)
+docker exec rabbitmq rabbitmqadmin export /tmp/definitions.json
+docker exec rabbitmq rabbitmqadmin import /tmp/definitions.json</code></pre>
+            </div>
+
+            <div class="cl-box tip">
+              <div class="cl-ico">🖥️</div>
+              <div class="cl-bd"><strong>Management UI:</strong> Abre <code>http://localhost:15672</code>. Desde aquí
+                puedes ver colas en tiempo real, publicar mensajes de prueba, ver bindings, monitorear consumers y
+                gestionar usuarios y vhosts visualmente.</div>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <h4>🧠 Pregunta rápida</h4>
+            <p>¿Qué puerto de RabbitMQ usan las aplicaciones cliente (producers y consumers)?</p>
+            <div class="quiz-options">
+              <div class="quiz-opt" onclick="checkQuiz(this,'correct')">A) 5672 (AMQP)</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">B) 15672 (Management UI)</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">C) 15692 (Prometheus)</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">D) 5671 (AMQPS con TLS)</div>
+            </div>
+            <div class="quiz-result" data-wrong="❌ Incorrecto. Las aplicaciones cliente usan el puerto 5672 (AMQP). El 15672 es la Management UI, el 15692 es Prometheus y el 5671 es AMQPS (AMQP con TLS).">✅ Correcto. Puerto 5672 = AMQP (conexiones de aplicaciones). Puerto 15672 = Management UI (navegador). Puerto 5671 = AMQPS (TLS). Puerto 15692 = métricas Prometheus.</div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nbtn prev" onclick="goTo(1)">← ¿Qué es RabbitMQ?</button>
+            <button class="done-btn" id="done-10" onclick="markDone(10)">✓ Marcar visto</button>
+            <button class="nbtn next" onclick="goTo(2)">Arquitectura AMQP →</button>
+          </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 11 ═══════════════ -->
+        <div class="lesson" id="lesson-11">
+          <div class="lesson-hdr">
+            <div class="l-badge">11</div>
+            <div class="l-title">
+              <h2>RabbitMQ con Go</h2>
+              <p>Librería amqp091-go, producer y consumer de producción completos</p>
+            </div>
+          </div>
+          <div class="lb">
+            <p>La librería oficial para Go es <strong>github.com/rabbitmq/amqp091-go</strong>, sucesor de <code>streadway/amqp</code> y mantenida activamente por el equipo de RabbitMQ. En este módulo construimos una integración completa desde cero: un cliente con reconexión automática, un producer con confirmaciones del broker y un consumer con manejo seguro de errores y goroutines.</p>
+
+            <h3>Setup del módulo</h3>
+            <p>Para usar RabbitMQ desde Go necesitas inicializar el módulo e instalar dos dependencias. <code>amqp091-go</code> es la librería oficial y activamente mantenida por el equipo de RabbitMQ — sucesor directo de <code>streadway/amqp</code>. <code>uuid</code> se usará para asignar un <code>MessageId</code> único a cada mensaje publicado, lo que permite trazar y deduplicar mensajes en producción.</p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">bash</div><button class="cpbtn" onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash">go mod init github.com/elkin/rabbitmq-service
+go get github.com/rabbitmq/amqp091-go@latest
+go get github.com/google/uuid@latest</code></pre>
+            </div>
+
+            <h3>Cliente base con reconexión automática</h3>
+            <p>En producción las conexiones TCP pueden caerse por reinicios del broker, cortes de red o timeouts. La solución correcta es un <code>Client</code> que gestione la conexión de forma inteligente: reintenta con <strong>backoff exponencial</strong> al conectar (1s → 2s → 4s → 8s...) y monitorea la conexión en segundo plano con una goroutine para reconectar si se cae. La <code>Connection</code> AMQP es thread-safe y puede compartirse entre goroutines; los <code>Channel</code> no.</p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">go <span class="cf">internal/rmq/client.go</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">package rmq
+
+import (
+    "context"
+    "fmt"
+    "log/slog"
+    "time"
+
+    amqp "github.com/rabbitmq/amqp091-go"
+)
+
+type Client struct {
+    url     string
+    conn    *amqp.Connection
+    logger  *slog.Logger
+}
+
+func NewClient(url string) *Client {
+    return &Client{url: url, logger: slog.Default()}
+}
+
+// Connect con reintentos exponenciales
+func (c *Client) Connect(ctx context.Context) error {
+    delays := []time.Duration{1, 2, 4, 8, 16, 32}
+    for i, d := range delays {
+        conn, err := amqp.Dial(c.url)
+        if err == nil {
+            c.conn = conn
+            c.logger.Info("conectado a RabbitMQ")
+            go c.watchConnection(ctx) // monitorear desconexiones
+            return nil
+        }
+        c.logger.Warn("fallo al conectar, reintentando", "attempt", i+1, "delay", d)
+        select {
+        case <-time.After(d * time.Second):
+        case <-ctx.Done():
+            return ctx.Err()
+        }
+    }
+    return fmt.Errorf("no se pudo conectar a RabbitMQ después de %d intentos", len(delays))
+}
+
+// watchConnection detecta desconexiones y reconecta
+func (c *Client) watchConnection(ctx context.Context) {
+    notifyClose := c.conn.NotifyClose(make(chan *amqp.Error, 1))
+    select {
+    case err := <-notifyClose:
+        if err != nil {
+            c.logger.Error("conexión RabbitMQ cerrada inesperadamente", "err", err)
+            c.Connect(ctx) // reconectar
+        }
+    case <-ctx.Done():
+    }
+}
+
+func (c *Client) NewChannel() (*amqp.Channel, error) {
+    if c.conn == nil || c.conn.IsClosed() {
+        return nil, fmt.Errorf("conexión no disponible")
+    }
+    return c.conn.Channel()
+}
+
+func (c *Client) Close() {
+    if c.conn != nil && !c.conn.IsClosed() {
+        c.conn.Close()
+    }
+}</code></pre>
+            </div>
+
+            <h3>Producer completo</h3>
+            <p>El <code>Producer</code> envuelve un <code>Channel</code> AMQP dedicado con Publisher Confirms habilitados. Su método <code>Publish</code> serializa el payload a JSON, lo envía al broker con <code>mandatory=true</code> y <strong>espera la confirmación explícita del broker</strong> antes de retornar. Si el broker devuelve un NACK o no responde en 10 segundos, la operación falla con error claro. También suscribe al canal <code>NotifyReturn</code> para detectar mensajes que no pudieron enrutarse porque no había ninguna queue de destino.</p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">go <span class="cf">internal/rmq/producer.go</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">package rmq
+
+import (
+    "context"
+    "encoding/json"
+    "fmt"
+    "time"
+
+    "github.com/google/uuid"
+    amqp "github.com/rabbitmq/amqp091-go"
+)
+
+type Producer struct {
+    client   *Client
+    ch       *amqp.Channel
+    confirms chan amqp.Confirmation
+}
+
+func NewProducer(client *Client) (*Producer, error) {
+    ch, err := client.NewChannel()
+    if err != nil { return nil, err }
+
+    // Activar publisher confirms
+    if err = ch.Confirm(false); err != nil {
+        return nil, fmt.Errorf("activar confirms: %w", err)
+    }
+
+    confirms := ch.NotifyPublish(make(chan amqp.Confirmation, 100))
+
+    // Capturar mensajes no enrutados
+    returns := ch.NotifyReturn(make(chan amqp.Return, 10))
+    go func() {
+        for r := range returns {
+            slog.Warn("mensaje no enrutado devuelto",
+                "exchange", r.Exchange,
+                "routing_key", r.RoutingKey,
+                "reply_code", r.ReplyCode,
+                "reply_text", r.ReplyText,
+            )
+        }
+    }()
+
+    return &Producer{client: client, ch: ch, confirms: confirms}, nil
+}
+
+// Publish serializa a JSON y publica con confirmación
+func (p *Producer) Publish(ctx context.Context, exchange, routingKey string, payload any) error {
+    body, err := json.Marshal(payload)
+    if err != nil { return fmt.Errorf("serializar: %w", err) }
+
+    err = p.ch.PublishWithContext(ctx,
+        exchange, routingKey,
+        true,  // mandatory
+        false, // immediate
+        amqp.Publishing{
+            MessageId:    uuid.New().String(),
+            ContentType:  "application/json",
+            DeliveryMode: amqp.Persistent,
+            Timestamp:    time.Now(),
+            Body:         body,
+        },
+    )
+    if err != nil { return fmt.Errorf("publicar: %w", err) }
+
+    // Esperar ack del broker
+    select {
+    case confirm := <-p.confirms:
+        if !confirm.Ack {
+            return fmt.Errorf("broker no confirmó el mensaje")
+        }
+        return nil
+    case <-time.After(10 * time.Second):
+        return fmt.Errorf("timeout en publisher confirm")
+    case <-ctx.Done():
+        return ctx.Err()
+    }
+}
+
+func (p *Producer) Close() { p.ch.Close() }</code></pre>
+            </div>
+
+            <h3>Consumer de producción con goroutines</h3>
+            <p>El <code>Consumer</code> sigue el patrón de <strong>handler inyectable</strong>: acepta una función <code>Handler(ctx, msg) error</code> con la lógica de negocio, y la infraestructura (prefetch, ACK/NACK, recuperación de panics) queda encapsulada en el Consumer. La regla es simple: si el handler retorna <code>nil</code> → ACK (procesado con éxito); si retorna error → NACK sin requeue (va a la DLQ). El <code>recover()</code> envuelve cada mensaje para que un panic no derribe el worker completo. <code>StartPool</code> lanza N goroutines independientes, cada una con su propio channel.</p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">go <span class="cf">internal/rmq/consumer.go</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">package rmq
+
+import (
+    "context"
+    "fmt"
+    "log/slog"
+
+    amqp "github.com/rabbitmq/amqp091-go"
+)
+
+type Handler func(ctx context.Context, msg amqp.Delivery) error
+
+type Consumer struct {
+    client  *Client
+    queue   string
+    tag     string
+    handler Handler
+}
+
+func NewConsumer(client *Client, queue, tag string, handler Handler) *Consumer {
+    return &Consumer{client: client, queue: queue, tag: tag, handler: handler}
+}
+
+func (c *Consumer) Start(ctx context.Context) error {
+    ch, err := c.client.NewChannel()
+    if err != nil { return err }
+    defer ch.Close()
+
+    // Prefetch: 1 mensaje a la vez por worker
+    if err = ch.Qos(1, 0, false); err != nil {
+        return fmt.Errorf("configurar QoS: %w", err)
+    }
+
+    msgs, err := ch.Consume(c.queue, c.tag, false, false, false, false, nil)
+    if err != nil { return fmt.Errorf("consumir: %w", err) }
+
+    slog.Info("consumer iniciado", "queue", c.queue, "tag", c.tag)
+
+    for {
+        select {
+        case msg, ok := <-msgs:
+            if !ok {
+                return fmt.Errorf("canal cerrado")
+            }
+            c.process(ctx, msg)
+        case <-ctx.Done():
+            slog.Info("consumer detenido", "queue", c.queue)
+            return nil
+        }
+    }
+}
+
+func (c *Consumer) process(ctx context.Context, msg amqp.Delivery) {
+    defer func() {
+        if r := recover(); r != nil {
+            slog.Error("panic en handler", "panic", r)
+            msg.Nack(false, false) // DLQ
+        }
+    }()
+
+    slog.Debug("procesando mensaje",
+        "message_id", msg.MessageId,
+        "queue", c.queue,
+        "redelivered", msg.Redelivered,
+    )
+
+    if err := c.handler(ctx, msg); err != nil {
+        slog.Error("error en handler", "err", err, "message_id", msg.MessageId)
+        msg.Nack(false, false)
+        return
+    }
+    msg.Ack(false)
+}
+
+// StartPool lanza N consumers compitiendo
+func (c *Consumer) StartPool(ctx context.Context, n int) {
+    for i := 0; i < n; i++ {
+        go func(id int) {
+            worker := &Consumer{
+                client:  c.client,
+                queue:   c.queue,
+                tag:     fmt.Sprintf("%s-%d", c.tag, id),
+                handler: c.handler,
+            }
+            if err := worker.Start(ctx); err != nil {
+                slog.Error("worker terminó con error", "id", id, "err", err)
+            }
+        }(i)
+    }
+}</code></pre>
+            </div>
+
+            <h3>main.go — integración completa</h3>
+            <p>El <code>main.go</code> ensambla todos los componentes: crea el cliente, el producer y arranca el pool de consumers. Usa <code>signal.NotifyContext</code> para capturar <code>SIGINT</code>/<code>SIGTERM</code> y cancelar el contexto cuando el proceso se apaga — esa cancelación se propaga automáticamente a todos los consumers y goroutines activas, garantizando un cierre limpio sin perder mensajes en vuelo.</p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">go <span class="cf">cmd/main.go</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">package main
+
+import (
+    "context"
+    "encoding/json"
+    "log/slog"
+    "os/signal"
+    "syscall"
+
+    amqp "github.com/rabbitmq/amqp091-go"
+    "github.com/elkin/rabbitmq-service/internal/rmq"
+)
+
+type OrdenCreada struct {
+    OrdenID   string  `json:"orden_id"`
+    UsuarioID string  `json:"usuario_id"`
+    Total     float64 `json:"total"`
+}
+
+func main() {
+    ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+    defer cancel()
+
+    // Conectar
+    client := rmq.NewClient("amqp://admin:admin123@localhost:5672/")
+    if err := client.Connect(ctx); err != nil {
+        slog.Error("no se pudo conectar", "err", err)
+        return
+    }
+    defer client.Close()
+
+    // Producer
+    producer, err := rmq.NewProducer(client)
+    if err != nil { slog.Error("producer", "err", err); return }
+    defer producer.Close()
+
+    // Publicar un evento de prueba
+    evento := OrdenCreada{OrdenID: "ord-001", UsuarioID: "usr-elkin", Total: 250_000}
+    if err := producer.Publish(ctx, "ordenes.events", "orden.creada", evento); err != nil {
+        slog.Error("publicar", "err", err)
+    }
+    slog.Info("evento publicado", "orden_id", evento.OrdenID)
+
+    // Consumer con handler
+    handler := func(ctx context.Context, msg amqp.Delivery) error {
+        var orden OrdenCreada
+        if err := json.Unmarshal(msg.Body, &orden); err != nil {
+            return fmt.Errorf("deserializar: %w", err) // NACK → DLQ
+        }
+        slog.Info("procesando orden", "id", orden.OrdenID, "total", orden.Total)
+        // lógica de negocio aquí...
+        return nil
+    }
+
+    consumer := rmq.NewConsumer(client, "ordenes.creadas", "inventario-worker", handler)
+    consumer.StartPool(ctx, 3) // 3 workers compitiendo
+
+    <-ctx.Done()
+    slog.Info("servicio detenido")
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <h4>🧠 Pregunta rápida</h4>
+            <p>¿Por qué en Go cada goroutine/worker debe tener su propio <code>*amqp.Channel</code> en lugar de compartir uno?</p>
+            <div class="quiz-options">
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">A) Porque el broker limita las operaciones por canal.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">B) Para reducir la latencia de red en cada operación.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'correct')">C) Porque amqp.Channel NO es thread-safe — compartirlo entre goroutines causaría race conditions.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">D) Porque cada canal tiene su propia cola de mensajes interna.</div>
+            </div>
+            <div class="quiz-result" data-wrong="❌ Incorrecto. La razón es que amqp.Channel NO es thread-safe. Compartirlo entre goroutines causaría race conditions y corrompería el protocolo AMQP. La Connection sí es thread-safe.">✅ Correcto. La documentación de amqp091-go es explícita: los channels no son thread-safe. Compartir un channel entre goroutines puede corromper el estado del protocolo AMQP. La Connection sí es thread-safe.</div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nbtn prev" onclick="goTo(9)">← Dead Letter Queues</button>
+            <button class="done-btn" id="done-11" onclick="markDone(11)">✓ Marcar visto</button>
+            <button class="nbtn next" onclick="goTo(12)">Plugins →</button>
+          </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 12 ═══════════════ -->
+        <div class="lesson" id="lesson-12">
+          <div class="lesson-hdr">
+            <div class="l-badge">12</div>
+            <div class="l-title">
+              <h2>Plugins y Management UI</h2>
+              <p>El ecosistema de plugins: Shovel, Federation, Streams y más</p>
+            </div>
+          </div>
+          <div class="lb">
+            <h3>Plugins esenciales</h3>
+            <div class="tw">
+              <table>
+                <tr>
+                  <th>Plugin</th>
+                  <th>Descripción</th>
+                  <th>Caso de uso</th>
+                </tr>
+                <tr>
+                  <td><code>rabbitmq_management</code></td>
+                  <td>UI web + REST API de administración</td>
+                  <td>Siempre habilitado en desarrollo y producción</td>
+                </tr>
+                <tr>
+                  <td><code>rabbitmq_prometheus</code></td>
+                  <td>Endpoint /metrics para Prometheus</td>
+                  <td>Monitoreo en producción</td>
+                </tr>
+                <tr>
+                  <td><code>rabbitmq_shovel</code></td>
+                  <td>Mueve/copia mensajes entre queues o brokers</td>
+                  <td>Migración de mensajes, replay manual</td>
+                </tr>
+                <tr>
+                  <td><code>rabbitmq_federation</code></td>
+                  <td>Replicación de exchanges/queues entre clusters</td>
+                  <td>Multi-región, recuperación ante desastres</td>
+                </tr>
+                <tr>
+                  <td><code>rabbitmq_stream</code></td>
+                  <td>Queues de tipo stream (append-only, replay)</td>
+                  <td>Cuando necesitas replay tipo Kafka</td>
+                </tr>
+                <tr>
+                  <td><code>rabbitmq_delayed_message_exchange</code></td>
+                  <td>Exchange con delay configurable por mensaje</td>
+                  <td>Scheduled messages, retry con delay exacto</td>
+                </tr>
+              </table>
+            </div>
+
+            <h3>Management REST API</h3>
+            <p>El plugin <code>rabbitmq_management</code> no solo provee la UI web — expone una <strong>API REST completa</strong> en el puerto 15672. Todo lo que puedes hacer desde la UI se puede hacer también via HTTP: ideal para healthchecks en pipelines CI/CD, automatización con scripts, inspección programática del estado de queues, y publicación o consumo de mensajes de prueba sin necesitar un cliente AMQP. La URL base incluye usuario y contraseña directamente.</p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">bash <span class="cf">Management API — operaciones comunes</span></div><button
+                  class="cpbtn" onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash">BASE="http://admin:admin123@localhost:15672/api"
+
+# Listar queues con métricas
+curl -s "$BASE/queues" | jq '.[] | {name, messages, consumers, memory}'
+
+# Ver estado de una queue específica
+curl -s "$BASE/queues/%2F/pedidos" | jq '{messages, consumers, state}'
+
+# Publicar mensaje via REST (debugging)
+curl -X POST "$BASE/exchanges/%2F/amq.default/publish" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "properties": {"delivery_mode": 2, "content_type": "application/json"},
+    "routing_key": "mi-queue",
+    "payload": "{\"test\": true}",
+    "payload_encoding": "string"
+  }'
+
+# Obtener mensajes de una queue (sin consumir, para debug)
+curl -X POST "$BASE/queues/%2F/mi-queue/get" \
+  -H "Content-Type: application/json" \
+  -d '{"count": 5, "ackmode": "ack_requeue_true", "encoding": "auto"}'
+
+# Crear queue via REST
+curl -X PUT "$BASE/queues/%2F/nueva-queue" \
+  -H "Content-Type: application/json" \
+  -d '{"durable": true, "arguments": {"x-message-ttl": 60000}}'
+
+# Overview del cluster
+curl -s "$BASE/overview" | jq '{
+  rabbitmq_version,
+  queues: .queue_totals.messages,
+  consumers: .queue_totals.consumers
+}'</code></pre>
+            </div>
+
+            <h3>Delayed Message Exchange</h3>
+            <p>El plugin <code>rabbitmq_delayed_message_exchange</code> añade un nuevo tipo de exchange (<code>x-delayed-message</code>) que retiene el mensaje en el broker durante N milisegundos antes de enrutarlo a la queue de destino. El delay se especifica por mensaje individualmente en el header <code>x-delay</code>. Esto simplifica enormemente implementar <strong>mensajes programados</strong> y <strong>retries con delay preciso</strong>, sin necesitar queues intermediarias con TTL ni schedulers externos.</p>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">go <span class="cf">mensajes con delay — scheduled tasks</span></div><button
+                  class="cpbtn" onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">// Declarar el exchange de tipo x-delayed-message
+err := ch.ExchangeDeclare(
+    "delayed",
+    "x-delayed-message",  // tipo del plugin
+    true, false, false, false,
+    amqp.Table{
+        "x-delayed-type": "direct", // tipo subyacente
+    },
+)
+
+// Publicar con delay en milisegundos
+err = ch.PublishWithContext(ctx, "delayed", "tarea.programada", false, false,
+    amqp.Publishing{
+        Headers: amqp.Table{
+            "x-delay": int64(30000), // delay de 30 segundos
+        },
+        ContentType:  "application/json",
+        DeliveryMode: amqp.Persistent,
+        Body:         taskJSON,
+    },
+)
+// El mensaje llega a la queue 30 segundos después de publicarse</code></pre>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <h4>🧠 Pregunta rápida</h4>
+            <p>¿Qué plugin de RabbitMQ permite mover mensajes de una queue a otra, incluso entre diferentes brokers?</p>
+            <div class="quiz-options">
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">A) <code>rabbitmq_stream</code></div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">B) <code>rabbitmq_prometheus</code></div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'correct')">C) <code>rabbitmq_shovel</code></div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">D) <code>rabbitmq_federation</code></div>
+            </div>
+            <div class="quiz-result" data-wrong="❌ Incorrecto. El plugin correcto es rabbitmq_shovel — mueve mensajes entre queues dentro del mismo broker o entre brokers remotos. Federation es para replicar topologías entre clusters.">✅ Correcto. Shovel mueve o copia mensajes entre queues/exchanges, ya sea dentro del mismo broker o entre brokers remotos. Ideal para migración de mensajes, integración entre entornos o recuperación de DLQs.</div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nbtn prev" onclick="goTo(11)">← Go</button>
+            <button class="done-btn" id="done-12" onclick="markDone(12)">✓ Marcar visto</button>
+            <button class="nbtn next" onclick="goTo(13)">Clustering →</button>
+          </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 13 ═══════════════ -->
+        <div class="lesson" id="lesson-13">
+          <div class="lesson-hdr">
+            <div class="l-badge">13</div>
+            <div class="l-title">
+              <h2>Clustering y Alta Disponibilidad</h2>
+              <p>Quorum Queues, Mirroring y arquitecturas resilientes</p>
+            </div>
+          </div>
+          <div class="lb">
+            <h3>Cluster RabbitMQ</h3>
+            <p>Un <strong>cluster</strong> de RabbitMQ es un grupo de nodos que trabajan juntos para garantizar alta disponibilidad. Si un nodo falla, los otros siguen atendiendo mensajes. La pieza clave son las <strong>Quorum Queues</strong>: replican los mensajes en múltiples nodos usando el algoritmo Raft, de forma que ningún mensaje se pierda aunque caiga un servidor.</p>
+
+            <div class="arch">
+              <div class="at">Cluster RabbitMQ 3 nodos</div>
+              <span class="h1">Rabbit@node1</span> ◄── sync ──► <span class="h1">Rabbit@node2</span> ◄── sync ──► <span
+                class="h1">Rabbit@node3</span>
+              (disco) (disco) (disco)
+
+              Metadata compartida: exchanges, bindings, usuarios, vhosts, políticas
+              Mensajes: solo en el nodo líder (Classic Queue) o replicados (Quorum Queue)
+
+              <span class="h3">[Load Balancer / HAProxy]</span>
+              │
+              ├──▶ node1:5672
+              ├──▶ node2:5672
+              └──▶ node3:5672
+            </div>
+
+            <h3>Quorum Queues — HA nativa</h3>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">bash <span class="cf">crear quorum queue</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Crear Quorum Queue (recomendado para producción)
+rabbitmqadmin declare queue \
+  name=pedidos-HA \
+  durable=true \
+  arguments='{"x-queue-type": "quorum"}'
+
+# Por política (aplica a todas las queues que coincidan)
+rabbitmqctl set_policy quorum-policy "^prod\." \
+  '{"x-queue-type": "quorum", "x-quorum-initial-group-size": 3}' \
+  --apply-to queues</code></pre>
+            </div>
+
+            <div class="cl-box tip">
+              <div class="cl-ico">🏆</div>
+              <div class="cl-bd"><strong>Reglas de Quorum:</strong> Un cluster de 3 nodos tolera 1 fallo. 5 nodos
+                toleran 2 fallos. La fórmula es <code>tolerancia = (n-1)/2</code>. Para producción, mínimo 3 nodos.
+              </div>
+            </div>
+
+            <h3>docker-compose cluster de 3 nodos</h3>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">yaml <span class="cf">docker-compose-cluster.yml</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-yaml">services:
+  rabbit1:
+    image: rabbitmq:3.13-management
+    hostname: rabbit1
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SECRET_COOKIE_COMPARTIDO"
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    ports: ["5672:5672", "15672:15672"]
+    volumes: [rabbit1-data:/var/lib/rabbitmq]
+
+  rabbit2:
+    image: rabbitmq:3.13-management
+    hostname: rabbit2
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SECRET_COOKIE_COMPARTIDO"
+    ports: ["5673:5672", "15673:15672"]
+    volumes: [rabbit2-data:/var/lib/rabbitmq]
+    depends_on: [rabbit1]
+
+  rabbit3:
+    image: rabbitmq:3.13-management
+    hostname: rabbit3
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SECRET_COOKIE_COMPARTIDO"
+    ports: ["5674:5672", "15674:15672"]
+    volumes: [rabbit3-data:/var/lib/rabbitmq]
+    depends_on: [rabbit1]
+
+  # HAProxy para balanceo de carga
+  haproxy:
+    image: haproxy:2.8
+    ports: ["5680:5680", "1936:1936"]
+    volumes: [./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg]
+    depends_on: [rabbit1, rabbit2, rabbit3]
+
+volumes:
+  rabbit1-data:
+  rabbit2-data:
+  rabbit3-data:</code></pre>
+            </div>
+
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">bash <span class="cf">unir nodos al cluster</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># En rabbit2: unirse a rabbit1
+docker exec rabbit2 rabbitmqctl stop_app
+docker exec rabbit2 rabbitmqctl reset
+docker exec rabbit2 rabbitmqctl join_cluster rabbit@rabbit1
+docker exec rabbit2 rabbitmqctl start_app
+
+# En rabbit3: unirse al cluster
+docker exec rabbit3 rabbitmqctl stop_app
+docker exec rabbit3 rabbitmqctl reset
+docker exec rabbit3 rabbitmqctl join_cluster rabbit@rabbit1
+docker exec rabbit3 rabbitmqctl start_app
+
+# Verificar estado del cluster
+docker exec rabbit1 rabbitmqctl cluster_status</code></pre>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <h4>🧠 Pregunta rápida</h4>
+            <p>¿Para qué sirve el <code>RABBITMQ_ERLANG_COOKIE</code> en un cluster?</p>
+            <div class="quiz-options">
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">A) Es la contraseña del usuario admin del broker.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'correct')">B) Es el secreto compartido que permite a los nodos Erlang autenticarse entre sí para formar el cluster.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">C) Cifra los mensajes que viajan entre nodos del cluster.</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">D) Es el nombre único del cluster para identificarlo en monitoring.</div>
+            </div>
+            <div class="quiz-result" data-wrong="❌ Incorrecto. El Erlang Cookie es el secreto compartido que permite a los nodos Erlang autenticarse entre sí para formar el cluster. No es una contraseña de usuario ni cifra mensajes.">✅ Correcto. RabbitMQ corre sobre la VM de Erlang (BEAM). El Erlang Cookie es el mecanismo de autenticación entre nodos Erlang. Todos los nodos del cluster DEBEN tener el mismo cookie para poder comunicarse.</div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nbtn prev" onclick="goTo(12)">← Plugins</button>
+            <button class="done-btn" id="done-13" onclick="markDone(13)">✓ Marcar visto</button>
+            <button class="nbtn next" onclick="goTo(14)">Seguridad →</button>
+          </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 14 ═══════════════ -->
+        <div class="lesson" id="lesson-14">
+          <div class="lesson-hdr">
+            <div class="l-badge">14</div>
+            <div class="l-title">
+              <h2>Seguridad</h2>
+              <p>TLS, usuarios, vhosts, permisos y mejores prácticas</p>
+            </div>
+          </div>
+          <div class="lb">
+            <p>Asegurar RabbitMQ en producción tiene tres capas: <strong>cifrado</strong> del tráfico con TLS para que credenciales y mensajes no viajen en texto claro, <strong>usuarios</strong> con mínimos privilegios (un usuario por servicio, no el usuario genérico <code>guest</code>), y <strong>virtual hosts</strong> para aislar aplicaciones entre sí dentro del mismo broker.</p>
+
+            <h3>Modelo de seguridad de RabbitMQ</h3>
+            <div class="cg">
+              <div class="cc">
+                <div class="cc-ico">🔐</div>
+                <h4>TLS/SSL</h4>
+                <p>Cifra las conexiones AMQP. Puerto 5671 para AMQPS.</p>
+              </div>
+              <div class="cc">
+                <div class="cc-ico">👤</div>
+                <h4>Usuarios y roles</h4>
+                <p>Tags: administrator, monitoring, policymaker, management, impersonator.</p>
+              </div>
+              <div class="cc">
+                <div class="cc-ico">🏠</div>
+                <h4>Virtual Hosts</h4>
+                <p>Aislamiento de namespaces. Cada microservicio en su propio vhost.</p>
+              </div>
+              <div class="cc">
+                <div class="cc-ico">🔒</div>
+                <h4>Permisos</h4>
+                <p>Configure / Write / Read — cada uno con regex sobre recursos.</p>
+              </div>
+            </div>
+
+            <h3>Gestión de usuarios y permisos</h3>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">bash <span class="cf">seguridad completa</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Eliminar el usuario guest (solo tiene acceso local, pero buena práctica)
+rabbitmqctl delete_user guest
+
+# Crear usuarios por servicio
+rabbitmqctl add_user pedidos-service "P@ssw0rd-Pedidos!"
+rabbitmqctl add_user inventario-service "P@ssw0rd-Inventario!"
+rabbitmqctl add_user monitoring-user "monitoring-secret"
+
+# Crear vhost por entorno/aplicación
+rabbitmqctl add_vhost /produccion
+
+# Asignar tags (roles)
+# administrator: gestión total
+# monitoring: solo ver, sin modificar
+# management: acceso a Management UI
+rabbitmqctl set_user_tags pedidos-service management
+rabbitmqctl set_user_tags monitoring-user monitoring
+
+# Permisos: configure_pattern write_pattern read_pattern
+# "" = ningún permiso, ".*" = todos
+# Solo puede escribir/leer en exchanges/queues que empiecen con "pedidos."
+rabbitmqctl set_permissions -p /produccion pedidos-service \
+  "^pedidos\." \   # configure: crear/borrar exchanges y queues con ese prefijo
+  "^pedidos\." \   # write: publicar a exchanges con ese prefijo
+  "^pedidos\."     # read: consumir de queues con ese prefijo
+
+# Verificar permisos
+rabbitmqctl list_user_permissions pedidos-service</code></pre>
+            </div>
+
+            <h3>TLS — Conexión cifrada</h3>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">bash <span class="cf">habilitar TLS en rabbitmq.conf</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash">## rabbitmq.conf — TLS
+listeners.ssl.default = 5671
+
+ssl_options.cacertfile = /etc/rabbitmq/ssl/ca_certificate.pem
+ssl_options.certfile   = /etc/rabbitmq/ssl/server_certificate.pem
+ssl_options.keyfile    = /etc/rabbitmq/ssl/server_key.pem
+ssl_options.verify     = verify_peer           # verificar certificado del cliente
+ssl_options.fail_if_no_peer_cert = true        # rechazar sin certificado
+ssl_options.versions.1 = tlsv1.3              # solo TLS 1.3</code></pre>
+            </div>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">go <span class="cf">conectar con TLS</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-go">import (
+    "crypto/tls"
+    "crypto/x509"
+    "os"
+    amqp "github.com/rabbitmq/amqp091-go"
+)
+
+func connectTLS(host string) (*amqp.Connection, error) {
+    // Cargar certificados
+    cert, err := tls.LoadX509KeyPair("client.pem", "client-key.pem")
+    if err != nil { return nil, err }
+
+    caCert, err := os.ReadFile("ca.pem")
+    if err != nil { return nil, err }
+
+    pool := x509.NewCertPool()
+    pool.AppendCertsFromPEM(caCert)
+
+    tlsCfg := &tls.Config{
+        Certificates: []tls.Certificate{cert},
+        RootCAs:      pool,
+        ServerName:   host,
+        MinVersion:   tls.VersionTLS13,
+    }
+
+    return amqp.DialTLS(
+        fmt.Sprintf("amqps://usuario:pass@%s:5671/vhost", host),
+        tlsCfg,
+    )
+}</code></pre>
+            </div>
+
+            <div class="cl-box danger">
+              <div class="cl-ico">🚨</div>
+              <div class="cl-bd"><strong>Nunca en producción:</strong> No uses <code>InsecureSkipVerify: true</code>. No
+                uses el usuario guest. No hardcodees passwords — usa variables de entorno o un secret manager (HashiCorp
+                Vault, AWS Secrets Manager).</div>
+            </div>
+          </div>
+
+          <div class="quiz-card">
+            <h4>🧠 Pregunta rápida</h4>
+            <p>¿Cuáles son los 3 tipos de permisos que se configuran por usuario y vhost en RabbitMQ?</p>
+            <div class="quiz-options">
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">A) Read, Write, Execute</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">B) Admin, User, Guest</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'correct')">C) Configure, Write, Read — cada uno con una expresión regular</div>
+              <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">D) Produce, Consume, Manage</div>
+            </div>
+            <div class="quiz-result" data-wrong="❌ Incorrecto. Los 3 tipos de permisos en RabbitMQ son Configure (crear/borrar resources), Write (publicar) y Read (consumir), cada uno con una expresión regular que define sobre qué recursos aplica.">✅ Correcto. Configure: crear/borrar exchanges y queues. Write: publicar mensajes. Read: consumir mensajes y hacer basic.get. Cada permiso es una regex que define sobre qué recursos aplica.</div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nbtn prev" onclick="goTo(13)">← Clustering</button>
+            <button class="done-btn" id="done-14" onclick="markDone(14)">✓ Marcar visto</button>
+            <button class="nbtn next" onclick="goTo(15)">Monitoreo →</button>
+          </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 15 ═══════════════ -->
+        <div class="lesson" id="lesson-15">
+          <div class="lesson-hdr">
+            <div class="l-badge">15</div>
+            <div class="l-title">
+              <h2>Monitoreo y Operaciones</h2>
+              <p>Métricas críticas, Grafana, alertas y checklist de producción</p>
+            </div>
+          </div>
+          <div class="lb">
+            <h3>Métricas críticas a monitorear</h3>
+            <div class="tw">
+              <table>
+                <tr>
+                  <th>Métrica</th>
+                  <th>Qué indica</th>
+                  <th>Umbral de alerta</th>
+                </tr>
+                <tr>
+                  <td><strong>queue_messages</strong></td>
+                  <td>Mensajes en cola (acumulación)</td>
+                  <td>Crecimiento sostenido → consumer lento</td>
+                </tr>
+                <tr>
+                  <td><strong>queue_consumers</strong></td>
+                  <td>Consumers activos</td>
+                  <td>= 0 con mensajes → servicio caído</td>
+                </tr>
+                <tr>
+                  <td><strong>message_rates.publish</strong></td>
+                  <td>Tasa de publicación (msg/s)</td>
+                  <td>Caída brusca → producer caído</td>
+                </tr>
+                <tr>
+                  <td><strong>message_rates.deliver</strong></td>
+                  <td>Tasa de entrega (msg/s)</td>
+                  <td>
+                    < publish_rate → consumo lento</td>
+                </tr>
+                <tr>
+                  <td><strong>memory_used</strong></td>
+                  <td>RAM usada por el broker</td>
+                  <td>>70% → flow control activo</td>
+                </tr>
+                <tr>
+                  <td><strong>disk_free</strong></td>
+                  <td>Disco libre</td>
+                  <td>
+                    < 1.5x RAM → alertar</td>
+                </tr>
+                <tr>
+                  <td><strong>connection_count</strong></td>
+                  <td>Conexiones activas</td>
+                  <td>Crecer continuamente → leak</td>
+                </tr>
+                <tr>
+                  <td><strong>channel_count</strong></td>
+                  <td>Canales activos</td>
+                  <td>Crecer sin control → leak</td>
+                </tr>
+              </table>
+            </div>
+
+            <h3>Configurar Prometheus + Grafana</h3>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">yaml <span class="cf">prometheus.yml</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-yaml">scrape_configs:
+  - job_name: 'rabbitmq'
+    static_configs:
+      - targets: ['rabbitmq:15692']
+    metrics_path: /metrics
+    scrape_interval: 15s</code></pre>
+            </div>
+
+            <h3>Comandos de diagnóstico</h3>
+            <div class="cb">
+              <div class="ch">
+                <div class="cl">bash <span class="cf">operaciones y diagnóstico</span></div><button class="cpbtn"
+                  onclick="cp(this)">copiar</button>
+              </div>
+              <pre><code class="language-bash"># Estado general del broker
+rabbitmq-diagnostics status
+rabbitmq-diagnostics ping
+rabbitmq-diagnostics check_port_connectivity
+rabbitmq-diagnostics check_running
+
+# Queues con más mensajes
+rabbitmqctl list_queues name messages consumers memory \
+  --formatter=pretty_table | sort -k2 -rn | head -10
+
+# Connections activas con detalles
+rabbitmqctl list_connections user vhost peer_host peer_port state channels
+
+# Detectar connection/channel leaks
+rabbitmqctl list_connections user channels | awk '{sum+=$2} END{print "Total channels:", sum}'
+
+# Logs en tiempo real
+tail -f /var/log/rabbitmq/rabbit@hostname.log
+
+# Healthcheck script para CI/CD
+rabbitmq-diagnostics -q ping && echo "RabbitMQ OK" || echo "RabbitMQ FAIL"</code></pre>
+            </div>
+
+            <h3>Checklist de producción</h3>
+            <ol class="steps">
+              <li><strong>Cluster 3+ nodos</strong> con Quorum Queues para tolerancia a fallos</li>
+              <li><strong>Load Balancer</strong> (HAProxy o ALB) delante del cluster</li>
+              <li><strong>AMQPS habilitado</strong> (TLS 1.3) — nunca AMQP plano en producción</li>
+              <li><strong>Usuario guest eliminado</strong> — usuarios específicos por servicio con permisos mínimos</li>
+              <li><strong>vhost separado</strong> por aplicación/entorno</li>
+              <li><strong>DLX configurado</strong> en todas las queues principales</li>
+              <li><strong>Publisher Confirms</strong> activos en todos los producers</li>
+              <li><strong>auto-ack=false</strong> en todos los consumers</li>
+              <li><strong>prefetch configurado</strong> (no = 0) en todos los consumers</li>
+              <li><strong>Prometheus + Grafana</strong> con alertas de queue depth, consumer count y memoria</li>
+              <li><strong>Backup de definitions.json</strong> automático diario</li>
+              <li><strong>Reconexión automática</strong> implementada en producers y consumers</li>
+            </ol>
+
+            <div class="quiz-card">
+              <h4>🧠 Pregunta rápida</h4>
+              <p>La métrica <code>queue_consumers = 0</code> con <code>queue_messages &gt; 0</code> indica:</p>
+              <div class="quiz-options">
+                <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">A) El broker está en modo de mantenimiento.</div>
+                <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">B) Los consumers están procesando mensajes muy rápido.</div>
+                <div class="quiz-opt" onclick="checkQuiz(this,'correct')">C) No hay consumers activos — los mensajes se acumulan sin procesarse. ¡Alerta crítica!</div>
+                <div class="quiz-opt" onclick="checkQuiz(this,'wrong')">D) La queue está llena y los producers están en pause.</div>
+              </div>
+              <div class="quiz-result" data-wrong="❌ Incorrecto. queue_consumers=0 con mensajes acumulados significa que no hay consumers activos — el servicio se cayó o no está corriendo. Es una alerta crítica que requiere acción inmediata.">✅ Correcto. Si hay mensajes pero cero consumers, nadie está procesando. Causa: el servicio consumer se cayó o no se ha iniciado. Es una de las alertas más críticas en producción.</div>
+            </div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nbtn prev" onclick="goTo(14)">← Seguridad</button>
+            <button class="done-btn" id="done-15" onclick="markDone(15)">🎓 Completar Curso</button>
+            <button class="nbtn next" onclick="showHome()">🏠 Vista General</button>
+          </div>
+        </div>
+
+      </div><!-- /lwrap -->
+    </main>
+  </div>
+
+  <script>
+    const TOTAL = 15;
+    let done = JSON.parse(localStorage.getItem('rmq-done') || '[]');
+
+    const mods = [
+      { id: 1,  ico: '🐇', t: '¿Qué es RabbitMQ?',            d: 'Historia, propósito y cuándo elegirlo sobre Kafka u otras soluciones.' },
+      { id: 10, ico: '🐳', t: 'Setup con Docker',              d: 'Levanta RabbitMQ en minutos: docker-compose, Management UI y primeros comandos.' },
+      { id: 2,  ico: '🔌', t: 'Arquitectura AMQP',             d: 'Protocolo AMQP: conexiones, canales, vhosts y el ciclo de vida del mensaje.' },
+      { id: 3,  ico: '🔀', t: 'Exchanges y Tipos',             d: 'Direct, Fanout, Topic y Headers — el corazón del enrutamiento.' },
+      { id: 4,  ico: '📦', t: 'Queues y Bindings',             d: 'Propiedades, Quorum Queues, argumentos avanzados y bindings.' },
+      { id: 5,  ico: '📤', t: 'Producers',                     d: 'Publisher Confirms, propiedades de mensaje y patrones de publicación robusta.' },
+      { id: 6,  ico: '📥', t: 'Consumers',                     d: 'Push vs Pull, prefetch count, consumer tags y consumo seguro.' },
+      { id: 7,  ico: '✅', t: 'Acknowledgements',               d: 'ACK, NACK, Reject, durabilidad completa y manejo de redeliveries.' },
+      { id: 8,  ico: '🧩', t: 'Patrones de Mensajería',        d: 'Work Queue, Pub/Sub, Routing, RPC y Competing Consumers.' },
+      { id: 9,  ico: '☠️', t: 'Dead Letter Queues',            d: 'DLX, TTL, retry con backoff exponencial y manejo de mensajes fallidos.' },
+      { id: 11, ico: '🐹', t: 'RabbitMQ con Go',               d: 'amqp091-go: producer y consumer de producción con reconexión automática.' },
+      { id: 12, ico: '🔌', t: 'Plugins y Management UI',       d: 'Shovel, Federation, Streams, delayed messages y REST API.' },
+      { id: 13, ico: '🌐', t: 'Clustering y Alta Disponibilidad', d: 'Quorum Queues, cluster de 3 nodos con Docker y HAProxy.' },
+      { id: 14, ico: '🔐', t: 'Seguridad',                     d: 'TLS/AMQPS, usuarios, permisos con regex y mejores prácticas.' },
+      { id: 15, ico: '📊', t: 'Monitoreo y Operaciones',       d: 'Métricas críticas, Prometheus, Grafana y checklist de producción.' },
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      hljs.highlightAll();
+      buildGrid();
+      syncProgress();
+      syncChecks();
+      restoreQuizStates();
+      addGlossaryTooltips();
+    });
+
+    function buildGrid() {
+      const g = document.getElementById('mgrid');
+      g.innerHTML = mods.map(m => `
+    <div class="mod-card" onclick="goTo(${m.id})">
+      <div class="mc-head">
+        <div class="mc-ico">${m.ico}</div>
+        <div>
+          <div class="mc-n">Módulo ${String(m.id).padStart(2, '0')}</div>
+          <div class="mc-t">${m.t}</div>
+        </div>
+      </div>
+      <div class="mc-d">${m.d}</div>
+      <div class="mc-st">
+        <div class="mc-dot ${done.includes(m.id) ? 'done' : ''}"></div>
+        ${done.includes(m.id) ? 'Completado' : 'Pendiente'}
+      </div>
+    </div>
+  `).join('');
+    }
+
+    function showHome() {
+      document.querySelectorAll('.lesson').forEach(l => l.classList.remove('active'));
+      document.getElementById('home-screen').style.display = '';
+      document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
+      document.querySelectorAll('.ni')[0].classList.add('active');
+      buildGrid();
+      closeMob();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goTo(n) {
+      document.getElementById('home-screen').style.display = 'none';
+      document.querySelectorAll('.lesson').forEach(l => l.classList.remove('active'));
+      const el = document.getElementById('lesson-' + n);
+      if (!el) return;
+      el.classList.add('active');
+      document.querySelectorAll('.ni').forEach(x => {
+        x.classList.remove('active');
+        const m = x.getAttribute('onclick').match(/goTo\((\d+)\)/);
+        if (m && parseInt(m[1]) === n) x.classList.add('active');
+      });
+      syncDoneBtn(n);
+      closeMob();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      el.querySelectorAll('pre code:not(.hljs)').forEach(b => hljs.highlightElement(b));
+    }
+
+    function markDone(n) {
+      if (!done.includes(n)) { done.push(n); localStorage.setItem('rmq-done', JSON.stringify(done)); }
+      syncProgress(); syncChecks(); syncDoneBtn(n);
+    }
+
+    function syncDoneBtn(n) {
+      const b = document.getElementById('done-' + n);
+      if (!b) return;
+      if (done.includes(n)) { b.classList.add('done'); b.textContent = '✅ Completado'; }
+      else { b.classList.remove('done'); b.textContent = '✓ Marcar visto'; }
+    }
+
+    function syncProgress() {
+      const p = Math.round((done.length / TOTAL) * 100);
+      document.getElementById('pgbar').style.width = p + '%';
+      document.getElementById('pglbl').textContent = done.length + ' / ' + TOTAL;
+    }
+
+    function syncChecks() {
+      for (let i = 1; i <= TOTAL; i++) {
+        const el = document.getElementById('chk-' + i);
+        if (!el) continue;
+        const item = el.closest('.ni');
+        if (done.includes(i)) { el.textContent = '✓'; item.classList.add('done'); }
+        else { el.textContent = '—'; item.classList.remove('done'); }
+      }
+    }
+
+    // ── QUIZ ──
+    let rmqQuiz = JSON.parse(localStorage.getItem('rmq-course-quiz') || '{}');
+
+    function saveQuizState(cardIdx, type, optIdx) {
+      rmqQuiz[cardIdx] = { type, optIdx };
+      localStorage.setItem('rmq-course-quiz', JSON.stringify(rmqQuiz));
+      updateQuizCounter();
+    }
+
+    function updateQuizCounter() {
+      const vals = Object.values(rmqQuiz);
+      const ok = vals.filter(v => v.type === 'correct').length;
+      const fail = vals.filter(v => v.type === 'wrong').length;
+      document.getElementById('quiz-ok').textContent = '✓ ' + ok;
+      document.getElementById('quiz-fail').textContent = '✗ ' + fail;
+    }
+
+    function checkQuiz(el, type) {
+      const card = el.closest('.quiz-card');
+      if (card.querySelector('.correct, .wrong')) return;
+      const opts = Array.from(card.querySelectorAll('.quiz-opt'));
+      const optIdx = opts.indexOf(el);
+      const allCards = Array.from(document.querySelectorAll('.quiz-card'));
+      const cardIdx = allCards.indexOf(card);
+      applyQuizResult(card, type, optIdx);
+      saveQuizState(cardIdx, type, optIdx);
+      if (type === 'correct') {
+        // find lesson id from closest .lesson
+        const lesson = card.closest('.lesson');
+        if (lesson) {
+          const id = parseInt(lesson.id.replace('lesson-', ''));
+          if (id) markDone(id);
+        }
+      }
+    }
+
+    function applyQuizResult(card, type, optIdx) {
+      const opts = Array.from(card.querySelectorAll('.quiz-opt'));
+      opts.forEach(o => o.onclick = null);
+      if (optIdx >= 0 && optIdx < opts.length) opts[optIdx].classList.add(type);
+      const result = card.querySelector('.quiz-result');
+      result.classList.add('show', type === 'correct' ? 'ok' : 'fail');
+      if (type === 'wrong') result.textContent = result.dataset.wrong || '❌ Incorrecto. Revisa el contenido del módulo.';
+    }
+
+    function restoreQuizStates() {
+      const allCards = Array.from(document.querySelectorAll('.quiz-card'));
+      allCards.forEach((card, i) => {
+        const state = rmqQuiz[i];
+        if (state) applyQuizResult(card, state.type, state.optIdx);
+      });
+      updateQuizCounter();
+    }
+
+    function cp(btn) {
+      const code = btn.closest('.cb').querySelector('code');
+      navigator.clipboard.writeText(code.innerText).then(() => {
+        btn.textContent = '✓ copiado';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'copiar'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+
+    function resetCourse() {
+      if (!confirm('¿Resetear todo el progreso del curso? Se borrarán los módulos completados y las preguntas resueltas.')) return;
+      localStorage.removeItem('rmq-done');
+      localStorage.removeItem('rmq-course-quiz');
+      location.reload();
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('overlay').classList.toggle('show');
+    }
+
+    function closeMob() {
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('show');
+      }
+    }
+
+    // ─── GLOSSARY TOOLTIPS ───
+    const GLOSSARY = {
+      'broker': 'Intermediario de mensajes: es el servidor central (RabbitMQ) que recibe mensajes de los productores y los entrega a los consumidores. Piénsalo como una oficina de correos que recibe, clasifica y reparte cartas.',
+      'message broker': 'Servidor que actúa de intermediario entre aplicaciones: recibe mensajes de unos servicios y los entrega a otros. Desacopla al emisor del receptor — ninguno necesita saber nada del otro.',
+      'AMQP': 'Advanced Message Queuing Protocol: el protocolo estándar abierto que RabbitMQ implementa para enviar y recibir mensajes. Define exactamente cómo se conectan productores, brokers y consumidores.',
+      'exchange': 'Componente de RabbitMQ que recibe mensajes del productor y decide a qué queues enviarlos. No almacena mensajes — solo los enruta. Existen 4 tipos: direct, fanout, topic y headers.',
+      'queue': 'Cola donde RabbitMQ almacena los mensajes hasta que un consumidor los recoge. Es FIFO (primero en entrar, primero en salir). Puede guardar mensajes en RAM o en disco si se configura como durable.',
+      'binding': 'Regla que conecta un exchange con una queue. Le indica al exchange: "los mensajes con esta routing key, mándalos a esta queue". Sin bindings, los mensajes no llegan a ninguna queue.',
+      'routing key': 'Etiqueta (texto) que el productor asigna al publicar un mensaje. El exchange la usa para decidir a qué queue entregar el mensaje. Es como la dirección en un sobre.',
+      'producer': 'Aplicación o servicio que envía (publica) mensajes a RabbitMQ. El productor nunca habla con las queues directamente — siempre publica a un exchange.',
+      'consumer': 'Aplicación o servicio que recibe y procesa mensajes de una queue de RabbitMQ. Puede haber varios consumers escuchando la misma queue — el broker reparte los mensajes entre ellos.',
+      'ACK': 'Acknowledgement (confirmación): mensaje que el consumidor envía al broker para decirle "recibí y procesé este mensaje correctamente, puedes eliminarlo". Sin ACK, RabbitMQ asume que el mensaje no fue procesado.',
+      'NACK': 'Negative Acknowledgement: confirmación negativa que el consumidor envía cuando no pudo procesar el mensaje. Se puede pedir al broker que lo reencole para reintentar (requeue=true) o que lo descarte/envíe a DLQ (requeue=false).',
+      'prefetch': 'Límite de cuántos mensajes puede tener un consumidor "en vuelo" (recibidos pero sin ACK) al mismo tiempo. Con prefetch=1, cada worker recibe un mensaje nuevo solo cuando termina el anterior — garantiza distribución equitativa.',
+      'durabilidad': 'Capacidad de que exchanges, queues y mensajes sobrevivan si el broker se reinicia. Requiere: exchange durable=true + queue durable=true + mensaje con delivery_mode=2.',
+      'durable': 'Propiedad de exchanges y queues: si es true, sobreviven al reinicio del broker. Si es false, desaparecen al reiniciar. Para producción siempre durable=true.',
+      'persistent': 'Un mensaje es persistent cuando se guarda en disco (delivery_mode=2). Sin esto, los mensajes solo viven en RAM y se pierden si el broker se reinicia, incluso si la queue es durable.',
+      'virtual host': 'Namespace de aislamiento dentro de RabbitMQ. Cada vhost tiene sus propios exchanges, queues y usuarios completamente separados. Útil para separar entornos (dev, staging, producción) o diferentes aplicaciones en el mismo broker.',
+      'vhost': 'Abreviatura de Virtual Host: espacio de nombres aislado dentro del broker. Como una carpeta que contiene sus propios exchanges, queues y permisos.',
+      'Dead Letter Queue': 'Cola especial donde RabbitMQ envía los mensajes que no pudieron ser procesados (por NACK, TTL expirado o queue llena). Permite inspeccionar y reprocesar mensajes fallidos sin perderlos.',
+      'DLQ': 'Dead Letter Queue: cola de mensajes muertos. Captura mensajes fallidos para análisis posterior. Sin una DLQ configurada, los mensajes rechazados se pierden definitivamente.',
+      'DLX': 'Dead Letter Exchange: exchange especial al que RabbitMQ reenvía automáticamente los mensajes "muertos". Se configura con el argumento x-dead-letter-exchange en la queue principal.',
+      'TTL': 'Time To Live: tiempo máximo de vida de un mensaje en una queue. Si el mensaje no es consumido antes de que expire, se convierte en "dead letter" y puede ir a la DLQ. Se configura en milisegundos.',
+      'fanout': 'Tipo de exchange que envía el mismo mensaje a TODAS las queues vinculadas, ignorando la routing key. Es el patrón broadcast: un evento, todos los suscriptores lo reciben.',
+      'topic exchange': 'Tipo de exchange con enrutamiento por wildcards. Usa * (una palabra exacta) y # (cero o más palabras). El más flexible: permite jerarquías como "orden.pagos.colombia".',
+      'direct exchange': 'Tipo de exchange que entrega mensajes a la queue cuya binding key coincide exactamente con la routing key del mensaje. El más simple y más común.',
+      'headers exchange': 'Tipo de exchange que enruta por los headers del mensaje en vez de la routing key. Permite condiciones complejas: "si region=colombia AND metodo=tarjeta, enviar a esta queue".',
+      'channel': 'Canal virtual ligero dentro de una conexión TCP a RabbitMQ. Una conexión puede tener múltiples channels. No son thread-safe: cada goroutine/hilo debe usar su propio channel.',
+      'connection': 'Conexión TCP real entre tu aplicación y el broker RabbitMQ. Costosa de abrir (handshake de autenticación). Se recomienda una por aplicación, reutilizarla y abrirla al inicio.',
+      'publisher confirms': 'Mecanismo por el que el broker confirma explícitamente que recibió y almacenó un mensaje. Sin esto, la publicación es fire-and-forget — no sabes si el mensaje llegó.',
+      'fire-and-forget': 'Patrón donde el emisor envía el mensaje y no espera ninguna confirmación de entrega. Es rápido pero sin garantías: si hay un fallo de red, el mensaje se pierde silenciosamente.',
+      'heartbeat': 'Mensaje de "sigo vivo" que se intercambian el cliente y el broker periódicamente. Si uno deja de recibir heartbeats del otro, asume que la conexión se cayó y la cierra. Detecta conexiones zombie.',
+      'Quorum Queue': 'Tipo de queue de RabbitMQ (3.8+) que replica sus mensajes en múltiples nodos del cluster usando el algoritmo Raft. Es la opción recomendada para producción: tolera fallos de nodos automáticamente.',
+      'cluster': 'Grupo de dos o más nodos RabbitMQ que trabajan juntos compartiendo metadata (exchanges, queues, usuarios). Aumenta la disponibilidad y permite escalar horizontalmente.',
+      'Erlang Cookie': 'Secreto compartido que usan los nodos Erlang (la VM sobre la que corre RabbitMQ) para autenticarse entre sí y formar un cluster. Todos los nodos del cluster deben tener el mismo valor.',
+      'management UI': 'Interfaz web de administración de RabbitMQ. Disponible en el puerto 15672. Permite ver queues en tiempo real, publicar mensajes de prueba, gestionar usuarios y monitorear el broker visualmente.',
+      'shovel': 'Plugin de RabbitMQ que mueve o copia mensajes de una queue/exchange a otro, incluso entre brokers remotos. Ideal para migraciones, recuperar mensajes de DLQs y conectar entornos separados.',
+      'backoff exponencial': 'Estrategia de reintento donde cada nuevo intento espera el doble que el anterior (1s, 2s, 4s, 8s...). Evita saturar un servicio que está fallando con reintentos constantes.',
+      'backoff': 'Tiempo de espera entre reintentos de una operación fallida. Sin backoff, los reintentos inmediatos pueden saturar y empeorar el sistema que ya está bajo presión.',
+      'idempotente': 'Operación que produce el mismo resultado sin importar cuántas veces se ejecute. Fundamental en sistemas de mensajería donde un mensaje puede entregarse más de una vez.',
+      'idempotencia': 'Propiedad de una operación de producir el mismo resultado sin importar cuántas veces se ejecute. Ejemplo: "crear usuario si no existe" es idempotente; "insertar usuario" sin verificar no lo es.',
+      'redelivery': 'Reentrega de un mensaje que el broker ya había enviado antes. Ocurre cuando el consumidor se desconecta sin hacer ACK. El campo msg.Redelivered=true indica que es un reenvío.',
+      'mandatory': 'Flag en basic.publish: si es true y el mensaje no encuentra ninguna queue de destino (no hay bindings), el broker devuelve el mensaje al producer en vez de descartarlo silenciosamente.',
+      'TLS': 'Transport Layer Security: protocolo de cifrado para conexiones seguras. Con TLS activado, toda la comunicación entre tu app y RabbitMQ viaja cifrada. El puerto AMQPS con TLS es el 5671.',
+      'AMQPS': 'AMQP sobre TLS (cifrado). Puerto 5671. Equivale a HTTPS pero para la comunicación con RabbitMQ. Obligatorio en producción para evitar que las credenciales viajen en texto claro.',
+      'competing consumers': 'Patrón donde múltiples consumidores compiten por los mensajes de la misma queue. El broker reparte los mensajes entre ellos — es el mecanismo de escalado horizontal más simple.',
+      'asíncrono': 'El productor envía el mensaje y continúa su ejecución sin esperar a que el consumidor lo procese. Lo opuesto a síncrono, donde el emisor bloquea hasta recibir respuesta.',
+      'desacoplamiento': 'El productor y el consumidor no se conocen entre sí y no dependen de que el otro esté disponible. Si el consumidor está caído, los mensajes esperan en la queue — el productor no falla.',
+      'microservicios': 'Arquitectura donde una aplicación se divide en servicios pequeños e independientes que se comunican entre sí. RabbitMQ es el mensajero entre esos servicios.',
+      'goroutine': 'Función que corre concurrentemente en Go. Muy ligera (~2KB). El runtime de Go gestiona miles de goroutines sobre unos pocos threads reales del sistema operativo.',
+      'thread-safe': 'Código que funciona correctamente cuando múltiples threads o goroutines lo usan al mismo tiempo, sin corromper datos. En amqp091-go: Connection es thread-safe, Channel NO lo es.',
+      'context': 'Mecanismo de Go para propagar cancelaciones, deadlines y valores a través de una cadena de llamadas. context.Done() es un canal que se cierra cuando hay que parar: timeout, SIGTERM, etc.',
+      'race condition': 'Bug donde dos goroutines leen y escriben los mismos datos al mismo tiempo, produciendo resultados impredecibles. Detectable con go test -race.',
+    };
+
+    function escapeRegexTerm(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function addGlossaryTooltips() {
+      document.querySelectorAll('.lesson').forEach(lesson => {
+        const seen = new Set();
+        const targets = lesson.querySelectorAll('.lb p, .lb li, .lb h3, .cl-bd');
+        targets.forEach(el => {
+          if (el.closest('.cb, pre, .quiz-card')) return;
+          const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+            acceptNode(node) {
+              let p = node.parentElement;
+              while (p && p !== el) {
+                if (['CODE', 'PRE'].includes(p.tagName)) return NodeFilter.FILTER_REJECT;
+                p = p.parentElement;
+              }
+              return NodeFilter.FILTER_ACCEPT;
+            }
+          });
+          const textNodes = [];
+          let n;
+          while ((n = walker.nextNode())) textNodes.push(n);
+          textNodes.forEach(textNode => {
+            for (const [term, tip] of Object.entries(GLOSSARY)) {
+              if (seen.has(term)) continue;
+              const regex = new RegExp('\\b(' + escapeRegexTerm(term) + 's?)\\b', 'i');
+              const text = textNode.textContent;
+              const match = regex.exec(text);
+              if (!match) continue;
+              seen.add(term);
+              const before = text.slice(0, match.index);
+              const matched = match[1];
+              const after = text.slice(match.index + matched.length);
+              const span = document.createElement('span');
+              span.className = 'term';
+              span.dataset.tip = tip;
+              span.textContent = matched;
+              const frag = document.createDocumentFragment();
+              if (before) frag.appendChild(document.createTextNode(before));
+              frag.appendChild(span);
+              if (after) frag.appendChild(document.createTextNode(after));
+              textNode.parentNode.replaceChild(frag, textNode);
+              break;
+            }
+          });
+        });
+      });
+      // Mobile: tap to toggle
+      document.querySelectorAll('.term').forEach(el => {
+        el.addEventListener('click', e => {
+          e.stopPropagation();
+          document.querySelectorAll('.term.tip-open').forEach(t => { if (t !== el) t.classList.remove('tip-open'); });
+          el.classList.toggle('tip-open');
+        });
+      });
+      document.addEventListener('click', () => {
+        document.querySelectorAll('.term.tip-open').forEach(el => el.classList.remove('tip-open'));
+      });
+    }
+
+  </script>
+</body>
+
+</html>

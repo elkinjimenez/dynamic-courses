@@ -974,6 +974,7 @@
       color: var(--text-secondary);
       overflow-x: auto;
       line-height: 1.8;
+      white-space: pre;
     }
 
     .arch-diagram .arch-title {
@@ -984,6 +985,7 @@
       letter-spacing: 2px;
       color: var(--text-muted);
       margin-bottom: 16px;
+      white-space: normal;
     }
 
     .arch-diagram .hi {
@@ -1653,11 +1655,9 @@
 
             <div class="arch-diagram">
               <div class="arch-title">Partition como Commit Log</div>
-              offset: <span class="hi2">0</span> <span class="hi2">1</span> <span class="hi2">2</span> <span
-                class="hi2">3</span> <span class="hi2">4</span> <span class="dim">← nuevo</span>
+              offset: <span class="hi2">0</span> <span class="hi2">1</span> <span class="hi2">2</span> <span class="hi2">3</span> <span class="hi2">4</span> <span class="dim">← nuevo</span>
               ┌──────────┬──────────┬──────────┬──────────┬──────────┐
-              │ <span class="hi3">msg:pedido</span>│<span class="hi3">msg:pago </span> │<span
-                class="hi3">msg:envio</span> │<span class="hi3">msg:entrega</span>│<span class="hi3">msg:review</span>│
+              │ <span class="hi3">msg:pedido</span>│<span class="hi3">msg:pago </span> │<span class="hi3">msg:envio</span> │<span class="hi3">msg:entrega</span>│<span class="hi3">msg:review</span>│
               <span class="dim">← append only</span>
               └──────────┴──────────┴──────────┴──────────┴──────────┘
               ▲ ▲
@@ -1701,8 +1701,7 @@
               │ <span class="hi">Kafka Cluster</span> │
               │ │
               │ ┌───────────┐ ┌───────────┐ ┌───────────┐ │
-              │ │<span class="hi2">Broker-1</span> │ │<span class="hi2">Broker-2</span> │ │<span
-                class="hi2">Broker-3</span> │ │
+              │ │<span class="hi2">Broker-1</span> │ │<span class="hi2">Broker-2</span> │ │<span class="hi2">Broker-3</span> │ │
               │ │(Controller)│ │ │ │ │ │
               │ │ Topic-A P0 │ │ Topic-A P1│ │ Topic-A P2│ │
               │ │ Topic-B P0 │ │ Topic-B P1│ │ Topic-B P0│ │
@@ -2058,8 +2057,7 @@ value.serializer=org.apache.kafka.common.serialization.ByteArraySerializer</code
 
             <h3>Diagrama de flujo del Producer</h3>
             <div class="arch-diagram">
-              <span class="hi">App</span> ─▶ send(record) ─▶ <span class="hi2">Serializer</span> ─▶ <span
-                class="hi2">Partitioner</span> ─▶ <span class="hi3">RecordAccumulator</span>
+              <span class="hi">App</span> ─▶ send(record) ─▶ <span class="hi2">Serializer</span> ─▶ <span class="hi2">Partitioner</span> ─▶ <span class="hi3">RecordAccumulator</span>
               (hash(key)%n) (buffer de batches)
               │
               linger.ms o batch lleno
@@ -2117,8 +2115,7 @@ value.serializer=org.apache.kafka.common.serialization.ByteArraySerializer</code
               <span class="dim">Mismo topic, otro grupo independiente:</span>
               P0 ──▶ <span class="hi2">Consumer-A</span> ┐
               P1 ──▶ <span class="hi2">Consumer-B</span> ├── <span class="hi">Group: analytics-pedidos</span>
-              P2 ──▶ <span class="hi2">Consumer-B</span> ┘ <span class="dim">(2 consumers → 1 cubre 2
-                particiones)</span>
+              P2 ──▶ <span class="hi2">Consumer-B</span> ┘ <span class="dim">(2 consumers → 1 cubre 2 particiones)</span>
 
               <span class="dim">Regla: una partición → máximo 1 consumer activo por grupo</span>
               <span class="dim"> si consumers > particiones → algunos consumers idle</span>
@@ -3445,17 +3442,10 @@ func (w *WindowAggregator) GetTotal(key string) float64 {
             <div class="arch-diagram">
               <span class="arch-title">Source y Sink Connectors</span>
 
-              <span class="hi">[PostgreSQL]</span> ──CDC──▶ <span class="hi2">[Source Connector]</span> ──▶ <span
-                class="hi3">Kafka</span> ──▶ <span class="hi2">[Sink Connector]</span> ──▶ <span
-                class="hi">[Elasticsearch]</span>
-              <span class="hi">[MySQL]</span> ──CDC──▶ <span class="hi2">[Source Connector]</span> ──▶ <span
-                class="hi3">Kafka</span> ──▶ <span class="hi2">[Sink Connector]</span> ──▶ <span
-                class="hi">[MongoDB]</span>
-              <span class="hi">[S3]</span> ──▶ <span class="hi2">[Source Connector]</span> ──▶ <span
-                class="hi3">Kafka</span> ──▶ <span class="hi2">[Sink Connector]</span> ──▶ <span class="hi">[S3
-                Archive]</span>
-              <span class="hi">[REST API]</span> ──▶ <span class="hi2">[Source Connector]</span> ──▶ <span
-                class="hi3">Kafka</span>
+              <span class="hi">[PostgreSQL]</span> ──CDC──▶ <span class="hi2">[Source Connector]</span> ──▶ <span class="hi3">Kafka</span> ──▶ <span class="hi2">[Sink Connector]</span> ──▶ <span class="hi">[Elasticsearch]</span>
+              <span class="hi">[MySQL]</span> ──CDC──▶ <span class="hi2">[Source Connector]</span> ──▶ <span class="hi3">Kafka</span> ──▶ <span class="hi2">[Sink Connector]</span> ──▶ <span class="hi">[MongoDB]</span>
+              <span class="hi">[S3]</span> ──▶ <span class="hi2">[Source Connector]</span> ──▶ <span class="hi3">Kafka</span> ──▶ <span class="hi2">[Sink Connector]</span> ──▶ <span class="hi">[S3 Archive]</span>
+              <span class="hi">[REST API]</span> ──▶ <span class="hi2">[Source Connector]</span> ──▶ <span class="hi3">Kafka</span>
 
               <span class="dim">Source: lee de sistema externo → Kafka</span>
               <span class="dim">Sink: lee de Kafka → escribe en sistema externo</span>
@@ -4130,8 +4120,25 @@ func monitorLag(ctx context.Context, client *kgo.Client,
       }
     })();
 
+    // ─── ARCH DIAGRAM DEDENT ───
+    function fixArchDiagrams() {
+      document.querySelectorAll('.arch-diagram').forEach(function(el) {
+        var html = el.innerHTML;
+        // Fix span/div attributes that wrapped to the next source line
+        html = html.replace(/<(span|div)(\s+)\n\s+class=/g, '<$1 class=');
+        // Strip the 14-space indentation added by HTML source formatting
+        html = html.replace(/\n {14}/g, '\n');
+        // Remove the leading newline before arch-title
+        html = html.replace(/^\n/, '');
+        // Remove trailing whitespace
+        html = html.replace(/\s+$/, '');
+        el.innerHTML = html;
+      });
+    }
+
     // ─── INIT ───
     document.addEventListener('DOMContentLoaded', () => {
+      fixArchDiagrams();
       hljs.highlightAll();
       buildModuleGrid();
       syncProgress();
